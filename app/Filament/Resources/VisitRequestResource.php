@@ -16,8 +16,8 @@ use Filament\Notifications\Notification;
 class VisitRequestResource extends Resource
 {
     protected static ?string $model = VisitRequest::class;
-    protected static string | \BackedEnum | null $navigationIcon = 'heroicon-o-clipboard-document-list';
-    protected static string | \UnitEnum | null $navigationGroup = 'Visitor Management';
+    protected static string|\BackedEnum|null $navigationIcon = 'heroicon-o-clipboard-document-list';
+    protected static string|\UnitEnum|null $navigationGroup = 'Visitor Management';
     protected static ?int $navigationSort = 2;
     protected static ?string $navigationLabel = 'Visit Requests';
 
@@ -87,19 +87,10 @@ class VisitRequestResource extends Resource
         return $table
             ->columns([
                 Tables\Columns\TextColumn::make('id')->label('#')->sortable(),
-                Tables\Columns\TextColumn::make('visitor.full_name')
-                    ->label('Visitor')->searchable()->sortable(),
-                Tables\Columns\TextColumn::make('host.name')
-                    ->label('Host')->searchable()->sortable(),
-                Tables\Columns\TextColumn::make('site.name')
-                    ->label('Site')->sortable(),
-                Tables\Columns\TextColumn::make('purpose')
-                    ->limit(30)->tooltip(fn ($record) => $record->purpose),
-                Tables\Columns\TextColumn::make('visitor_type')->badge()
-                    ->color(fn (string $state) => match ($state) {
-                        'external' => 'info',
-                        'internal' => 'success',
-                    }),
+                Tables\Columns\TextColumn::make('visitor.full_name')->label('Visitor')->searchable()->sortable(),
+                Tables\Columns\TextColumn::make('host.name')->label('Host')->searchable()->sortable(),
+                Tables\Columns\TextColumn::make('site.name')->label('Site')->sortable(),
+                Tables\Columns\TextColumn::make('purpose')->limit(30)->tooltip(fn ($record) => $record->purpose),
                 Tables\Columns\TextColumn::make('category')->badge(),
                 Tables\Columns\TextColumn::make('status')->badge()
                     ->color(fn (string $state) => match ($state) {
@@ -112,28 +103,15 @@ class VisitRequestResource extends Resource
                         'expired' => 'danger',
                         default => 'gray',
                     })->sortable(),
-                Tables\Columns\TextColumn::make('scheduled_at')
-                    ->dateTime('M d, Y H:i')->sortable(),
-                Tables\Columns\TextColumn::make('created_at')
-                    ->dateTime()->sortable()->toggleable(isToggledHiddenByDefault: true),
+                Tables\Columns\TextColumn::make('scheduled_at')->dateTime('M d, Y H:i')->sortable(),
             ])
             ->defaultSort('created_at', 'desc')
             ->filters([
-                Tables\Filters\SelectFilter::make('status')
-                    ->options([
-                        'pending' => 'Pending',
-                        'approved' => 'Approved',
-                        'rejected' => 'Rejected',
-                        'checked_in' => 'Checked In',
-                        'checked_out' => 'Checked Out',
-                    ]),
-                Tables\Filters\SelectFilter::make('visitor_type')
-                    ->options([
-                        'external' => 'External',
-                        'internal' => 'Internal',
-                    ]),
-                Tables\Filters\SelectFilter::make('site_id')
-                    ->relationship('site', 'name')->label('Site'),
+                Tables\Filters\SelectFilter::make('status')->options([
+                    'pending' => 'Pending', 'approved' => 'Approved', 'rejected' => 'Rejected',
+                    'checked_in' => 'Checked In', 'checked_out' => 'Checked Out',
+                ]),
+                Tables\Filters\SelectFilter::make('site_id')->relationship('site', 'name')->label('Site'),
             ])
             ->actions([
                 \Filament\Actions\ActionGroup::make([
@@ -145,23 +123,22 @@ class VisitRequestResource extends Resource
                         ->requiresConfirmation()
                         ->visible(fn ($record) => $record->status === 'pending')
                         ->action(function ($record) {
-                            $record->update(['status' => 'approved']);
+                            $qr = 'VMS-VR-' . $record->id . '-' . now()->timestamp;
+                            $record->update(['status' => 'approved', 'qr_code' => $qr]);
                             VisitApproval::create([
                                 'visit_request_id' => $record->id,
                                 'approver_id' => auth()->id(),
                                 'action' => 'approved',
                                 'acted_at' => now(),
                             ]);
-                            Notification::make()->title('Visit Approved')->success()->send();
+                            Notification::make()->title('Visit Approved — QR generated')->success()->send();
                         }),
                     \Filament\Actions\Action::make('reject')
                         ->icon('heroicon-o-x-circle')
                         ->color('danger')
                         ->requiresConfirmation()
                         ->form([
-                            Forms\Components\Textarea::make('remarks')
-                                ->label('Rejection Reason')
-                                ->required(),
+                            Forms\Components\Textarea::make('remarks')->label('Rejection Reason')->required(),
                         ])
                         ->visible(fn ($record) => $record->status === 'pending')
                         ->action(function ($record, array $data) {
@@ -175,6 +152,20 @@ class VisitRequestResource extends Resource
                             ]);
                             Notification::make()->title('Visit Rejected')->danger()->send();
                         }),
+                    \Filament\Actions\Action::make('qr_code')
+                        ->icon('heroicon-o-qr-code')
+                        ->color('info')
+                        ->label('View QR')
+                        ->visible(fn ($record) => !empty($record->qr_code))
+                        ->url(fn ($record) => route('visit.qr', $record->id))
+                        ->openUrlInNewTab(),
+                    \Filament\Actions\Action::make('badge')
+                        ->icon('heroicon-o-identification')
+                        ->color('primary')
+                        ->label('Print Badge')
+                        ->visible(fn ($record) => in_array($record->status, ['approved', 'checked_in']))
+                        ->url(fn ($record) => route('visit.badge', $record->id))
+                        ->openUrlInNewTab(),
                 ]),
             ])
             ->bulkActions([

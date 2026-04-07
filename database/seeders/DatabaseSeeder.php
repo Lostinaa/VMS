@@ -41,10 +41,11 @@ class DatabaseSeeder extends Seeder
         Zone::create(['name' => 'NOC', 'site_id' => $dc->id, 'security_level' => 'restricted', 'description' => 'Network Operations Center', 'escort_required' => true, 'is_active' => true]);
 
         // ── Users ──
-        $admin = User::where('email', 'admin@vms.com')->first();
-        if ($admin) {
-            $admin->update(['site_id' => $hq->id, 'department_id' => $itDept->id]);
-        }
+        $admin = User::firstOrCreate(
+            ['email' => 'admin@vms.com'],
+            ['name' => 'Admin', 'password' => bcrypt('password'), 'role' => 'admin', 'is_active' => true, 'site_id' => $hq->id, 'department_id' => $itDept->id]
+        );
+        $admin->update(['site_id' => $hq->id, 'department_id' => $itDept->id]);
 
         $receptionist = User::create(['name' => 'Sara Tadesse', 'email' => 'sara@ethiotelecom.et', 'password' => bcrypt('password'), 'phone' => '+251911223344', 'employee_id' => 'ET-1001', 'role' => 'receptionist', 'site_id' => $hq->id, 'department_id' => $secDept->id, 'is_active' => true]);
         $host1 = User::create(['name' => 'Dawit Kebede', 'email' => 'dawit@ethiotelecom.et', 'password' => bcrypt('password'), 'phone' => '+251922334455', 'employee_id' => 'ET-2001', 'role' => 'host', 'site_id' => $hq->id, 'department_id' => $itDept->id, 'is_active' => true]);
@@ -62,11 +63,11 @@ class DatabaseSeeder extends Seeder
 
         // ── Visit Requests ──
         // Approved & checked in
-        $vr1 = VisitRequest::create(['visitor_id' => $v1->id, 'host_id' => $host1->id, 'site_id' => $hq->id, 'zone_id' => $officeZone->id, 'purpose' => 'Network equipment demo', 'visitor_type' => 'external', 'category' => 'vendor', 'status' => 'checked_in', 'scheduled_at' => now()->subHours(2)]);
+        $vr1 = VisitRequest::create(['visitor_id' => $v1->id, 'host_id' => $host1->id, 'site_id' => $hq->id, 'zone_id' => $officeZone->id, 'purpose' => 'Network equipment demo', 'visitor_type' => 'external', 'category' => 'vendor', 'status' => 'checked_in', 'scheduled_at' => now()->subHours(2), 'qr_code' => 'VMS-VR-1-' . now()->timestamp]);
         // Approved, not yet checked in
-        $vr2 = VisitRequest::create(['visitor_id' => $v2->id, 'host_id' => $host1->id, 'site_id' => $dc->id, 'zone_id' => $serverRoom->id, 'purpose' => '5G infrastructure review', 'visitor_type' => 'external', 'category' => 'vendor', 'status' => 'approved', 'scheduled_at' => now()->addHour()]);
+        $vr2 = VisitRequest::create(['visitor_id' => $v2->id, 'host_id' => $host1->id, 'site_id' => $dc->id, 'zone_id' => $serverRoom->id, 'purpose' => '5G infrastructure review', 'visitor_type' => 'external', 'category' => 'vendor', 'status' => 'approved', 'scheduled_at' => now()->addHour(), 'qr_code' => 'VMS-VR-2-' . now()->timestamp]);
         // Checked out
-        $vr3 = VisitRequest::create(['visitor_id' => $v3->id, 'host_id' => $host2->id, 'site_id' => $hq->id, 'zone_id' => $execZone->id, 'purpose' => 'Contract negotiation meeting', 'visitor_type' => 'external', 'category' => 'vip', 'status' => 'checked_out', 'scheduled_at' => now()->subDays(1)]);
+        $vr3 = VisitRequest::create(['visitor_id' => $v3->id, 'host_id' => $host2->id, 'site_id' => $hq->id, 'zone_id' => $execZone->id, 'purpose' => 'Contract negotiation meeting', 'visitor_type' => 'external', 'category' => 'vip', 'status' => 'checked_out', 'scheduled_at' => now()->subDays(1), 'qr_code' => 'VMS-VR-3-' . now()->timestamp]);
         // Pending
         $vr4 = VisitRequest::create(['visitor_id' => $v4->id, 'host_id' => $host1->id, 'site_id' => $hq->id, 'zone_id' => $lobbyZone->id, 'purpose' => 'AC maintenance work', 'visitor_type' => 'external', 'category' => 'contractor', 'status' => 'pending', 'scheduled_at' => now()->addDay()]);
         // Pending job applicant
@@ -93,8 +94,8 @@ class DatabaseSeeder extends Seeder
         $ci3 = CheckIn::create(['visit_request_id' => $vr3->id, 'visitor_id' => $v3->id, 'checked_in_by' => $receptionist->id, 'checked_in_at' => now()->subDays(1)->subHours(1), 'checked_out_at' => now()->subDays(1)->addHours(3), 'checked_out_by' => $receptionist->id, 'badge_number' => 'VB-002']);
 
         // ── Badges ──
-        Badge::create(['check_in_id' => $ci1->id, 'visitor_id' => $v1->id, 'badge_type' => 'visitor', 'access_level' => 'standard', 'printed_at' => now()->subHours(2), 'expires_at' => now()->endOfDay()]);
-        Badge::create(['check_in_id' => $ci3->id, 'visitor_id' => $v3->id, 'badge_type' => 'vip', 'access_level' => 'executive', 'printed_at' => now()->subDays(1), 'expires_at' => now()->subDays(1)->endOfDay()]);
+        Badge::create(['check_in_id' => $ci1->id, 'visitor_id' => $v1->id, 'badge_type' => 'adhesive', 'access_level' => 'standard', 'printed_at' => now()->subHours(2), 'expires_at' => now()->endOfDay()]);
+        Badge::create(['check_in_id' => $ci3->id, 'visitor_id' => $v3->id, 'badge_type' => 'gate_pass', 'access_level' => 'executive', 'printed_at' => now()->subDays(1), 'expires_at' => now()->subDays(1)->endOfDay()]);
 
         // ── Visitor Logs ──
         VisitorLog::create(['visitor_id' => $v1->id, 'check_in_id' => $ci1->id, 'zone_id' => $lobbyZone->id, 'access_point' => 'Main Entrance', 'action' => 'entry', 'logged_at' => now()->subHours(2)]);
