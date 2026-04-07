@@ -15,8 +15,8 @@ use Filament\Notifications\Notification;
 class CheckInResource extends Resource
 {
     protected static ?string $model = CheckIn::class;
-    protected static string | \BackedEnum | null $navigationIcon = 'heroicon-o-arrow-right-end-on-rectangle';
-    protected static string | \UnitEnum | null $navigationGroup = 'Visitor Management';
+    protected static string|\BackedEnum|null $navigationIcon = 'heroicon-o-arrow-right-end-on-rectangle';
+    protected static string|\UnitEnum|null $navigationGroup = 'Visitor Management';
     protected static ?int $navigationSort = 3;
     protected static ?string $navigationLabel = 'Check-In / Out';
 
@@ -25,12 +25,17 @@ class CheckInResource extends Resource
         return $schema->schema([
             Schemas\Components\Section::make('Check-In Details')->schema([
                 Forms\Components\Select::make('visit_request_id')
-                    ->relationship('visitRequest', 'id', fn ($query) =>
+                    ->relationship(
+                        'visitRequest',
+                        'id',
+                        fn($query) =>
                         $query->where('status', 'approved')->orWhere('status', 'checked_in')
-                    )->getOptionLabelFromRecordUsing(fn ($record) =>
+                    )->getOptionLabelFromRecordUsing(
+                        fn($record) =>
                         "#{$record->id} - {$record->visitor->full_name} ({$record->purpose})"
                     )->searchable()->preload()->required()->reactive()
-                    ->afterStateUpdated(fn ($state, Schemas\Components\Utilities\Set $set) => $set('visitor_id',
+                    ->afterStateUpdated(fn($state, Schemas\Components\Utilities\Set $set) => $set(
+                        'visitor_id',
                         \App\Models\VisitRequest::find($state)?->visitor_id
                     )),
                 Forms\Components\Hidden::make('visitor_id'),
@@ -64,29 +69,29 @@ class CheckInResource extends Resource
             Tables\Columns\TextColumn::make('badge_number')->badge(),
             Tables\Columns\TextColumn::make('checkedInBy.name')->label('By')->toggleable(isToggledHiddenByDefault: true),
         ])
-        ->defaultSort('checked_in_at', 'desc')
-        ->filters([
-            Tables\Filters\Filter::make('on_site')
-                ->query(fn ($query) => $query->whereNull('checked_out_at'))
-                ->label('Currently On-Site')->default(),
-        ])
-        ->actions([
-            \Filament\Actions\Action::make('checkout')
-                ->icon('heroicon-o-arrow-left-start-on-rectangle')
-                ->color('warning')
-                ->requiresConfirmation()
-                ->visible(fn ($record) => is_null($record->checked_out_at))
-                ->action(function ($record) {
-                    $record->update([
-                        'checked_out_at' => now(),
-                        'checked_out_by' => auth()->id(),
-                    ]);
-                    $record->visitRequest->update(['status' => 'checked_out']);
-                    Notification::make()->title('Visitor checked out')->success()->send();
-                }),
-            \Filament\Actions\EditAction::make(),
-        ])
-        ->bulkActions([\Filament\Actions\BulkActionGroup::make([\Filament\Actions\DeleteBulkAction::make()])]);
+            ->defaultSort('checked_in_at', 'desc')
+            ->filters([
+                Tables\Filters\Filter::make('on_site')
+                    ->query(fn($query) => $query->whereNull('checked_out_at'))
+                    ->label('Currently On-Site')->default(),
+            ])
+            ->actions([
+                \Filament\Actions\Action::make('checkout')
+                    ->icon('heroicon-o-arrow-left-start-on-rectangle')
+                    ->color('warning')
+                    ->requiresConfirmation()
+                    ->visible(fn($record) => is_null($record->checked_out_at))
+                    ->action(function ($record) {
+                        $record->update([
+                            'checked_out_at' => now(),
+                            'checked_out_by' => auth()->id(),
+                        ]);
+                        $record->visitRequest->update(['status' => 'checked_out']);
+                        Notification::make()->title('Visitor checked out')->success()->send();
+                    }),
+                \Filament\Actions\EditAction::make(),
+            ])
+            ->bulkActions([\Filament\Actions\BulkActionGroup::make([\Filament\Actions\DeleteBulkAction::make()])]);
     }
 
     public static function getPages(): array
