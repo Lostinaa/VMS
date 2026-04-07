@@ -5,6 +5,7 @@ namespace App\Filament\Resources;
 use App\Filament\Resources\CheckInResource\Pages;
 use App\Models\CheckIn;
 use Filament\Forms;
+use Filament\Schemas;
 use Filament\Schemas\Schema;
 use Filament\Resources\Resource;
 use Filament\Tables;
@@ -22,7 +23,7 @@ class CheckInResource extends Resource
     public static function form(Schema $schema): Schema
     {
         return $schema->schema([
-            Forms\Components\Section::make('Check-In Details')->schema([
+            Schemas\Components\Section::make('Check-In Details')->schema([
                 Forms\Components\Select::make('visit_request_id')
                     ->relationship('visitRequest', 'id', fn ($query) =>
                         $query->where('status', 'approved')->orWhere('status', 'checked_in')
@@ -40,7 +41,7 @@ class CheckInResource extends Resource
                 Forms\Components\DateTimePicker::make('checked_out_at')->native(false),
             ])->columns(2),
 
-            Forms\Components\Section::make('Verification')->schema([
+            Schemas\Components\Section::make('Verification')->schema([
                 Forms\Components\FileUpload::make('photo_path')
                     ->image()->directory('checkins/photos')->label('Photo'),
                 Forms\Components\FileUpload::make('signature_path')

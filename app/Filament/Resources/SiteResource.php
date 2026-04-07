@@ -5,6 +5,7 @@ namespace App\Filament\Resources;
 use App\Filament\Resources\SiteResource\Pages;
 use App\Models\Site;
 use Filament\Forms;
+use Filament\Schemas;
 use Filament\Schemas\Schema;
 use Filament\Resources\Resource;
 use Filament\Tables;
@@ -20,7 +21,7 @@ class SiteResource extends Resource
     public static function form(Schema $schema): Schema
     {
         return $schema->schema([
-            Forms\Components\Section::make('Site Details')->schema([
+            Schemas\Components\Section::make('Site Details')->schema([
                 Forms\Components\TextInput::make('name')
                     ->required()->maxLength(255),
                 Forms\Components\TextInput::make('code')

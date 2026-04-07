@@ -5,6 +5,7 @@ namespace App\Filament\Resources;
 use App\Filament\Resources\VisitorResource\Pages;
 use App\Models\Visitor;
 use Filament\Forms;
+use Filament\Schemas;
 use Filament\Schemas\Schema;
 use Filament\Resources\Resource;
 use Filament\Tables;
@@ -20,14 +21,14 @@ class VisitorResource extends Resource
     public static function form(Schema $schema): Schema
     {
         return $schema->schema([
-            Forms\Components\Section::make('Personal Information')->schema([
+            Schemas\Components\Section::make('Personal Information')->schema([
                 Forms\Components\TextInput::make('full_name')->required()->maxLength(255),
                 Forms\Components\TextInput::make('email')->email()->maxLength(255),
                 Forms\Components\TextInput::make('phone')->tel()->maxLength(20),
                 Forms\Components\TextInput::make('organization')->maxLength(255),
             ])->columns(2),
 
-            Forms\Components\Section::make('Identification')->schema([
+            Schemas\Components\Section::make('Identification')->schema([
                 Forms\Components\Select::make('id_type')
                     ->options([
                         'national_id' => 'National ID',
@@ -45,7 +46,7 @@ class VisitorResource extends Resource
                     ->imageResizeTargetHeight('300'),
             ])->columns(2),
 
-            Forms\Components\Section::make('Status')->schema([
+            Schemas\Components\Section::make('Status')->schema([
                 Forms\Components\Toggle::make('is_blacklisted')
                     ->label('Blacklisted')
                     ->reactive(),

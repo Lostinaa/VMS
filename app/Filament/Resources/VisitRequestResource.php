@@ -6,6 +6,7 @@ use App\Filament\Resources\VisitRequestResource\Pages;
 use App\Models\VisitRequest;
 use App\Models\VisitApproval;
 use Filament\Forms;
+use Filament\Schemas;
 use Filament\Schemas\Schema;
 use Filament\Resources\Resource;
 use Filament\Tables;
@@ -23,7 +24,7 @@ class VisitRequestResource extends Resource
     public static function form(Schema $schema): Schema
     {
         return $schema->schema([
-            Forms\Components\Section::make('Visit Details')->schema([
+            Schemas\Components\Section::make('Visit Details')->schema([
                 Forms\Components\Select::make('visitor_id')
                     ->relationship('visitor', 'full_name')
                     ->searchable()->preload()->required()
@@ -45,7 +46,7 @@ class VisitRequestResource extends Resource
                     )->searchable()->preload(),
             ])->columns(2),
 
-            Forms\Components\Section::make('Schedule & Purpose')->schema([
+            Schemas\Components\Section::make('Schedule & Purpose')->schema([
                 Forms\Components\TextInput::make('purpose')->required()->maxLength(255),
                 Forms\Components\Select::make('visitor_type')
                     ->options([
