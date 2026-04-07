@@ -5,7 +5,7 @@ namespace App\Filament\Resources;
 use App\Filament\Resources\VisitorResource\Pages;
 use App\Models\Visitor;
 use Filament\Forms;
-use Filament\Forms\Form;
+use Filament\Schemas\Schema;
 use Filament\Resources\Resource;
 use Filament\Tables;
 use Filament\Tables\Table;
@@ -13,13 +13,13 @@ use Filament\Tables\Table;
 class VisitorResource extends Resource
 {
     protected static ?string $model = Visitor::class;
-    protected static ?string $navigationIcon = 'heroicon-o-user-group';
-    protected static ?string $navigationGroup = 'Visitor Management';
+    protected static string | \BackedEnum | null $navigationIcon = 'heroicon-o-user-group';
+    protected static string | \UnitEnum | null $navigationGroup = 'Visitor Management';
     protected static ?int $navigationSort = 1;
 
-    public static function form(Form $form): Form
+    public static function form(Schema $schema): Schema
     {
-        return $form->schema([
+        return $schema->schema([
             Forms\Components\Section::make('Personal Information')->schema([
                 Forms\Components\TextInput::make('full_name')->required()->maxLength(255),
                 Forms\Components\TextInput::make('email')->email()->maxLength(255),

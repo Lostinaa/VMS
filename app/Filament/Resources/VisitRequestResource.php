@@ -6,7 +6,7 @@ use App\Filament\Resources\VisitRequestResource\Pages;
 use App\Models\VisitRequest;
 use App\Models\VisitApproval;
 use Filament\Forms;
-use Filament\Forms\Form;
+use Filament\Schemas\Schema;
 use Filament\Resources\Resource;
 use Filament\Tables;
 use Filament\Tables\Table;
@@ -15,14 +15,14 @@ use Filament\Notifications\Notification;
 class VisitRequestResource extends Resource
 {
     protected static ?string $model = VisitRequest::class;
-    protected static ?string $navigationIcon = 'heroicon-o-clipboard-document-list';
-    protected static ?string $navigationGroup = 'Visitor Management';
+    protected static string | \BackedEnum | null $navigationIcon = 'heroicon-o-clipboard-document-list';
+    protected static string | \UnitEnum | null $navigationGroup = 'Visitor Management';
     protected static ?int $navigationSort = 2;
     protected static ?string $navigationLabel = 'Visit Requests';
 
-    public static function form(Form $form): Form
+    public static function form(Schema $schema): Schema
     {
-        return $form->schema([
+        return $schema->schema([
             Forms\Components\Section::make('Visit Details')->schema([
                 Forms\Components\Select::make('visitor_id')
                     ->relationship('visitor', 'full_name')

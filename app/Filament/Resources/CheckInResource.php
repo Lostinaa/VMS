@@ -5,7 +5,7 @@ namespace App\Filament\Resources;
 use App\Filament\Resources\CheckInResource\Pages;
 use App\Models\CheckIn;
 use Filament\Forms;
-use Filament\Forms\Form;
+use Filament\Schemas\Schema;
 use Filament\Resources\Resource;
 use Filament\Tables;
 use Filament\Tables\Table;
@@ -14,14 +14,14 @@ use Filament\Notifications\Notification;
 class CheckInResource extends Resource
 {
     protected static ?string $model = CheckIn::class;
-    protected static ?string $navigationIcon = 'heroicon-o-arrow-right-end-on-rectangle';
-    protected static ?string $navigationGroup = 'Visitor Management';
+    protected static string | \BackedEnum | null $navigationIcon = 'heroicon-o-arrow-right-end-on-rectangle';
+    protected static string | \UnitEnum | null $navigationGroup = 'Visitor Management';
     protected static ?int $navigationSort = 3;
     protected static ?string $navigationLabel = 'Check-In / Out';
 
-    public static function form(Form $form): Form
+    public static function form(Schema $schema): Schema
     {
-        return $form->schema([
+        return $schema->schema([
             Forms\Components\Section::make('Check-In Details')->schema([
                 Forms\Components\Select::make('visit_request_id')
                     ->relationship('visitRequest', 'id', fn ($query) =>
