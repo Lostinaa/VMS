@@ -1,0 +1,34 @@
+<?php
+
+use Illuminate\Database\Migrations\Migration;
+use Illuminate\Database\Schema\Blueprint;
+use Illuminate\Support\Facades\Schema;
+
+return new class extends Migration
+{
+    public function up(): void
+    {
+        Schema::create('check_ins', function (Blueprint $table) {
+            $table->id();
+            $table->foreignId('visit_request_id')->constrained()->cascadeOnDelete();
+            $table->foreignId('visitor_id')->constrained()->cascadeOnDelete();
+            $table->foreignId('checked_in_by')->nullable()->constrained('users')->nullOnDelete();
+            $table->timestamp('checked_in_at');
+            $table->timestamp('checked_out_at')->nullable();
+            $table->foreignId('checked_out_by')->nullable()->constrained('users')->nullOnDelete();
+            $table->string('photo_path')->nullable();
+            $table->string('signature_path')->nullable();
+            $table->string('badge_number')->nullable();
+            $table->string('qr_code')->nullable();
+            $table->text('remarks')->nullable();
+            $table->timestamps();
+
+            $table->index('checked_in_at');
+        });
+    }
+
+    public function down(): void
+    {
+        Schema::dropIfExists('check_ins');
+    }
+};
