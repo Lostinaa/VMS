@@ -75,7 +75,7 @@ class AlertResource extends Resource
             ]),
         ])
         ->actions([
-            Tables\Actions\Action::make('acknowledge')
+            \Filament\Actions\Action::make('acknowledge')
                 ->icon('heroicon-o-check')
                 ->color('success')
                 ->requiresConfirmation()
@@ -84,9 +84,9 @@ class AlertResource extends Resource
                     $record->update(['acknowledged_by' => auth()->id(), 'acknowledged_at' => now()]);
                     Notification::make()->title('Alert acknowledged')->success()->send();
                 }),
-            Tables\Actions\ViewAction::make(),
+            \Filament\Actions\ViewAction::make(),
         ])
-        ->bulkActions([Tables\Actions\BulkActionGroup::make([Tables\Actions\DeleteBulkAction::make()])]);
+        ->bulkActions([\Filament\Actions\BulkActionGroup::make([\Filament\Actions\DeleteBulkAction::make()])]);
     }
 
     public static function getPages(): array

@@ -70,7 +70,7 @@ class CheckInResource extends Resource
                 ->label('Currently On-Site')->default(),
         ])
         ->actions([
-            Tables\Actions\Action::make('checkout')
+            \Filament\Actions\Action::make('checkout')
                 ->icon('heroicon-o-arrow-left-start-on-rectangle')
                 ->color('warning')
                 ->requiresConfirmation()
@@ -83,9 +83,9 @@ class CheckInResource extends Resource
                     $record->visitRequest->update(['status' => 'checked_out']);
                     Notification::make()->title('Visitor checked out')->success()->send();
                 }),
-            Tables\Actions\EditAction::make(),
+            \Filament\Actions\EditAction::make(),
         ])
-        ->bulkActions([Tables\Actions\BulkActionGroup::make([Tables\Actions\DeleteBulkAction::make()])]);
+        ->bulkActions([\Filament\Actions\BulkActionGroup::make([\Filament\Actions\DeleteBulkAction::make()])]);
     }
 
     public static function getPages(): array

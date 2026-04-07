@@ -135,10 +135,10 @@ class VisitRequestResource extends Resource
                     ->relationship('site', 'name')->label('Site'),
             ])
             ->actions([
-                Tables\Actions\ActionGroup::make([
-                    Tables\Actions\ViewAction::make(),
-                    Tables\Actions\EditAction::make(),
-                    Tables\Actions\Action::make('approve')
+                \Filament\Actions\ActionGroup::make([
+                    \Filament\Actions\ViewAction::make(),
+                    \Filament\Actions\EditAction::make(),
+                    \Filament\Actions\Action::make('approve')
                         ->icon('heroicon-o-check-circle')
                         ->color('success')
                         ->requiresConfirmation()
@@ -153,7 +153,7 @@ class VisitRequestResource extends Resource
                             ]);
                             Notification::make()->title('Visit Approved')->success()->send();
                         }),
-                    Tables\Actions\Action::make('reject')
+                    \Filament\Actions\Action::make('reject')
                         ->icon('heroicon-o-x-circle')
                         ->color('danger')
                         ->requiresConfirmation()
@@ -177,8 +177,8 @@ class VisitRequestResource extends Resource
                 ]),
             ])
             ->bulkActions([
-                Tables\Actions\BulkActionGroup::make([
-                    Tables\Actions\DeleteBulkAction::make(),
+                \Filament\Actions\BulkActionGroup::make([
+                    \Filament\Actions\DeleteBulkAction::make(),
                 ]),
             ]);
     }
