@@ -30,7 +30,7 @@ class CheckInResource extends Resource
                     )->getOptionLabelFromRecordUsing(fn ($record) =>
                         "#{$record->id} - {$record->visitor->full_name} ({$record->purpose})"
                     )->searchable()->preload()->required()->reactive()
-                    ->afterStateUpdated(fn ($state, Forms\Set $set) => $set('visitor_id',
+                    ->afterStateUpdated(fn ($state, Schemas\Components\Utilities\Set $set) => $set('visitor_id',
                         \App\Models\VisitRequest::find($state)?->visitor_id
                     )),
                 Forms\Components\Hidden::make('visitor_id'),

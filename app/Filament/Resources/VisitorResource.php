@@ -51,8 +51,8 @@ class VisitorResource extends Resource
                     ->label('Blacklisted')
                     ->reactive(),
                 Forms\Components\Textarea::make('blacklist_reason')
-                    ->visible(fn (Forms\Get $get) => $get('is_blacklisted'))
-                    ->required(fn (Forms\Get $get) => $get('is_blacklisted')),
+                    ->visible(fn (Schemas\Components\Utilities\Get $get) => $get('is_blacklisted'))
+                    ->required(fn (Schemas\Components\Utilities\Get $get) => $get('is_blacklisted')),
             ]),
         ]);
     }

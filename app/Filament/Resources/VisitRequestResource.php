@@ -41,7 +41,7 @@ class VisitRequestResource extends Resource
                     ->relationship('site', 'name')
                     ->searchable()->preload()->required()->reactive(),
                 Forms\Components\Select::make('zone_id')
-                    ->relationship('zone', 'name', fn ($query, Forms\Get $get) =>
+                    ->relationship('zone', 'name', fn ($query, Schemas\Components\Utilities\Get $get) =>
                         $query->where('site_id', $get('site_id'))
                     )->searchable()->preload(),
             ])->columns(2),
