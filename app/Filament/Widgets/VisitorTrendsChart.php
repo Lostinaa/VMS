@@ -8,7 +8,7 @@ use Illuminate\Support\Carbon;
 
 class VisitorTrendsChart extends ChartWidget
 {
-    protected static ?string $heading = 'Visitor Trends (Last 7 Days)';
+    protected ?string $heading = 'Visitor Trends (Last 7 Days)';
     protected static ?int $sort = 2;
 
     protected function getData(): array
