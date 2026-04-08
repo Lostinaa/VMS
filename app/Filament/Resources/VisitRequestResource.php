@@ -152,21 +152,21 @@ class VisitRequestResource extends Resource
                             ]);
                             Notification::make()->title('Visit Rejected')->danger()->send();
                         }),
-                    \Filament\Actions\Action::make('qr_code')
-                        ->icon('heroicon-o-qr-code')
-                        ->color('info')
-                        ->label('View QR')
-                        ->visible(fn ($record) => !empty($record->qr_code))
-                        ->url(fn ($record) => route('visit.qr', $record->id))
-                        ->openUrlInNewTab(),
-                    \Filament\Actions\Action::make('badge')
-                        ->icon('heroicon-o-identification')
-                        ->color('primary')
-                        ->label('Print Badge')
-                        ->visible(fn ($record) => in_array($record->status, ['approved', 'checked_in']))
-                        ->url(fn ($record) => route('visit.badge', $record->id))
-                        ->openUrlInNewTab(),
                 ]),
+                \Filament\Actions\Action::make('qr_code')
+                    ->icon('heroicon-o-qr-code')
+                    ->color('info')
+                    ->label('QR')
+                    ->visible(fn ($record) => !empty($record->qr_code))
+                    ->url(fn ($record) => route('visit.qr', $record->id))
+                    ->openUrlInNewTab(),
+                \Filament\Actions\Action::make('badge')
+                    ->icon('heroicon-o-identification')
+                    ->color('primary')
+                    ->label('Badge')
+                    ->visible(fn ($record) => in_array($record->status, ['approved', 'checked_in']))
+                    ->url(fn ($record) => route('visit.badge', $record->id))
+                    ->openUrlInNewTab(),
             ])
             ->bulkActions([
                 \Filament\Actions\BulkActionGroup::make([
