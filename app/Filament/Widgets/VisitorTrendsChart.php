@@ -10,6 +10,7 @@ class VisitorTrendsChart extends ChartWidget
 {
     protected ?string $heading = 'Visitor Trends (Last 7 Days)';
     protected static ?int $sort = 2;
+    protected int | string | array $columnSpan = 'full';
 
     protected function getData(): array
     {

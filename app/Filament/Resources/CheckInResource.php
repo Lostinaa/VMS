@@ -4,6 +4,7 @@ namespace App\Filament\Resources;
 
 use App\Filament\Resources\CheckInResource\Pages;
 use App\Models\CheckIn;
+use App\Notifications\VisitorCheckedInNotification;
 use Filament\Forms;
 use Filament\Schemas;
 use Filament\Schemas\Schema;

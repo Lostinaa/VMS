@@ -11,7 +11,8 @@ class CheckIn extends Model
     protected $fillable = [
         'visit_request_id', 'visitor_id', 'checked_in_by',
         'checked_in_at', 'checked_out_at', 'checked_out_by',
-        'photo_path', 'signature_path', 'badge_number', 'qr_code', 'remarks',
+        'photo_path', 'signature_path', 'badge_number',
+        'qr_code', 'checked_in_via_qr', 'remarks',
     ];
 
     protected $casts = [

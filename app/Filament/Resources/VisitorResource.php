@@ -26,6 +26,10 @@ class VisitorResource extends Resource
                 Forms\Components\TextInput::make('email')->email()->maxLength(255),
                 Forms\Components\TextInput::make('phone')->tel()->maxLength(20),
                 Forms\Components\TextInput::make('organization')->maxLength(255),
+                Forms\Components\TextInput::make('car_plate_number')
+                    ->label('Car Plate Number')
+                    ->placeholder('e.g. AA-12345')
+                    ->maxLength(20),
             ])->columns(2),
 
             Schemas\Components\Section::make('Identification')->schema([
@@ -53,6 +57,18 @@ class VisitorResource extends Resource
                 Forms\Components\Textarea::make('blacklist_reason')
                     ->visible(fn (Schemas\Components\Utilities\Get $get) => $get('is_blacklisted'))
                     ->required(fn (Schemas\Components\Utilities\Get $get) => $get('is_blacklisted')),
+                Forms\Components\Toggle::make('is_whitelisted')
+                    ->label('Whitelisted (Pre-approved)')
+                    ->helperText('Whitelisted visitors are auto-approved when they submit a visit request.')
+                    ->reactive(),
+                Forms\Components\DatePicker::make('whitelist_expires_at')
+                    ->label('Whitelist Expiry')
+                    ->visible(fn (Schemas\Components\Utilities\Get $get) => $get('is_whitelisted'))
+                    ->native(false),
+                Forms\Components\TextInput::make('whitelist_reason')
+                    ->label('Whitelist Reason')
+                    ->visible(fn (Schemas\Components\Utilities\Get $get) => $get('is_whitelisted'))
+                    ->placeholder('e.g. Regular contractor, Board member'),
             ]),
         ]);
     }
@@ -73,6 +89,10 @@ class VisitorResource extends Resource
                     ->trueIcon('heroicon-o-x-circle')->trueColor('danger')
                     ->falseIcon('heroicon-o-check-circle')->falseColor('success')
                     ->label('Blacklisted'),
+                Tables\Columns\IconColumn::make('is_whitelisted')->boolean()
+                    ->trueIcon('heroicon-o-shield-check')->trueColor('info')
+                    ->falseIcon('heroicon-o-minus-circle')->falseColor('gray')
+                    ->label('Whitelisted'),
                 Tables\Columns\TextColumn::make('visit_requests_count')
                     ->counts('visitRequests')->label('Visits'),
                 Tables\Columns\TextColumn::make('created_at')->dateTime()->sortable()
@@ -80,6 +100,7 @@ class VisitorResource extends Resource
             ])
             ->filters([
                 Tables\Filters\TernaryFilter::make('is_blacklisted')->label('Blacklisted'),
+                Tables\Filters\TernaryFilter::make('is_whitelisted')->label('Whitelisted'),
                 Tables\Filters\SelectFilter::make('id_type')
                     ->options([
                         'national_id' => 'National ID',

@@ -10,9 +10,10 @@ use Illuminate\Database\Eloquent\Relations\HasOne;
 class VisitRequest extends Model
 {
     protected $fillable = [
-        'visitor_id', 'host_id', 'site_id', 'zone_id', 'purpose',
-        'visitor_type', 'category', 'status', 'scheduled_at',
-        'expires_at', 'group_id', 'notes', 'qr_code',
+        'visitor_id', 'host_id', 'site_id', 'zone_id', 'meeting_location',
+        'purpose', 'visitor_type', 'category', 'status', 'scheduled_at',
+        'expected_duration_hours', 'expires_at', 'group_id', 'notes',
+        'qr_code', 'parking_number',
     ];
 
     protected $casts = [

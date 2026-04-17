@@ -5,6 +5,8 @@ namespace App\Filament\Resources;
 use App\Filament\Resources\VisitRequestResource\Pages;
 use App\Models\VisitRequest;
 use App\Models\VisitApproval;
+use App\Notifications\VisitApprovedNotification;
+use App\Notifications\VisitRejectedNotification;
 use Filament\Forms;
 use Filament\Schemas;
 use Filament\Schemas\Schema;
@@ -21,6 +23,27 @@ class VisitRequestResource extends Resource
     protected static ?int $navigationSort = 2;
     protected static ?string $navigationLabel = 'Visit Requests';
 
+    public static function getEloquentQuery(): \Illuminate\Database\Eloquent\Builder
+    {
+        $query = parent::getEloquentQuery();
+        $user = auth()->user();
+
+        // Hosts only see visits assigned to them
+        if ($user?->role === 'host') {
+            $query->where('host_id', $user->id);
+        }
+
+        // CXO PA sees only VIP/executive visits or visits to restricted zones
+        if ($user?->role === 'cxo_pa') {
+            $query->where(function ($q) {
+                $q->where('category', 'vip')
+                  ->orWhereHas('zone', fn ($z) => $z->where('security_level', 'restricted'));
+            });
+        }
+
+        return $query;
+    }
+
     public static function form(Schema $schema): Schema
     {
         return $schema->schema([
@@ -33,6 +56,7 @@ class VisitRequestResource extends Resource
                         Forms\Components\TextInput::make('email')->email(),
                         Forms\Components\TextInput::make('phone')->tel(),
                         Forms\Components\TextInput::make('organization'),
+                        Forms\Components\TextInput::make('car_plate_number')->label('Car Plate'),
                     ]),
                 Forms\Components\Select::make('host_id')
                     ->relationship('host', 'name')
@@ -44,6 +68,10 @@ class VisitRequestResource extends Resource
                     ->relationship('zone', 'name', fn ($query, Schemas\Components\Utilities\Get $get) =>
                         $query->where('site_id', $get('site_id'))
                     )->searchable()->preload(),
+                Forms\Components\TextInput::make('meeting_location')
+                    ->label('Meeting Room / Location')
+                    ->placeholder('e.g. Conference Room 3A')
+                    ->maxLength(255),
             ])->columns(2),
 
             Schemas\Components\Section::make('Schedule & Purpose')->schema([
@@ -75,8 +103,19 @@ class VisitRequestResource extends Resource
                     ->visibleOn('edit'),
                 Forms\Components\DateTimePicker::make('scheduled_at')
                     ->required()->native(false),
+                Forms\Components\TextInput::make('expected_duration_hours')
+                    ->label('Expected Duration (hours)')
+                    ->numeric()->minValue(1)->maxValue(72)
+                    ->placeholder('e.g. 2'),
                 Forms\Components\DateTimePicker::make('expires_at')
                     ->native(false),
+                Forms\Components\TextInput::make('parking_number')
+                    ->label('Parking Spot')
+                    ->placeholder('e.g. P-42'),
+                Forms\Components\TextInput::make('group_id')
+                    ->label('Group ID (for group visits)')
+                    ->placeholder('Leave empty for individual visits')
+                    ->helperText('Assign the same Group ID to link multiple visitors in one group visit.'),
                 Forms\Components\Textarea::make('notes')->rows(3)->columnSpanFull(),
             ])->columns(2),
         ]);
@@ -131,7 +170,14 @@ class VisitRequestResource extends Resource
                                 'action' => 'approved',
                                 'acted_at' => now(),
                             ]);
-                            Notification::make()->title('Visit Approved — QR generated')->success()->send();
+
+                            // Send email notification to visitor (FR-007)
+                            $record->load(['visitor', 'host', 'site', 'zone']);
+                            if ($record->visitor->email) {
+                                $record->visitor->notify(new VisitApprovedNotification($record));
+                            }
+
+                            Notification::make()->title('Visit Approved — QR generated & notification sent')->success()->send();
                         }),
                     \Filament\Actions\Action::make('reject')
                         ->icon('heroicon-o-x-circle')
@@ -150,7 +196,14 @@ class VisitRequestResource extends Resource
                                 'remarks' => $data['remarks'],
                                 'acted_at' => now(),
                             ]);
-                            Notification::make()->title('Visit Rejected')->danger()->send();
+
+                            // Send email notification to visitor (FR-007)
+                            $record->load(['visitor', 'host', 'site', 'zone']);
+                            if ($record->visitor->email) {
+                                $record->visitor->notify(new VisitRejectedNotification($record, $data['remarks']));
+                            }
+
+                            Notification::make()->title('Visit Rejected — notification sent')->danger()->send();
                         }),
                 ]),
                 \Filament\Actions\Action::make('qr_code')

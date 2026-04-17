@@ -1,0 +1,411 @@
+ Functional Requirements Specification (FRS)
+
+Functional Requirements Specification document
+Visitor Management System (VMS)
+DOCUMENT VERSION 1.3
+sept 16, 2025
+ Functional Requirements Specification (FRS)
+Document Approval
+Signatures Required
+Document Title Visitor Management System(vms) and
+Version Number V1.3
+Version Date Sept 16, 2025
+Prepared by Hiwot Mohammed
+Approver Name
+Stakeholders name
+Document History
+Date Version Document Revision Description Document Author
+07/07/2025 V 1.1 Initial Draft Hiwot Mohammed
+15/7/2025 V1.2
+2
+nd Draft (Commented by
+Gebremariam Hailu, Andualem
+Eshetu and Edom Gessesse and
+Updated)
+Hiwot Mohammed
+16/09/25 V1.3
+Updated process flow commented by
+Salim Ahmed and Gebremariam Hailu
+Hiwot Mohammed
+ Functional Requirements Specification (FRS)
+Glossary
+Term Definition
+VMS Visitor Management System – a digital platform for managing and tracking visitors.
+FMS Facilities Management System – oversees building maintenance and services.
+SOC Security Operations Center – monitors and analyzes security incidents.
+Gate Pass
+System System that manages approvals and records for access to restricted areas.
+Self-Service
+Kiosk A station where visitors can check in/out and print badges without assistance.
+Badge A physical pass issued to a visitor containing identification and access info.
+ Functional Requirements Specification (FRS)
+Contents pages
+1. Introduction............................................................................................................................... 1
+1.1 Purpose..................................................................................................................................................................... 1
+1.2 Scope........................................................................................................................................................................ 1
+1.3 High level process flow............................................................................................................................................ 1
+2. Overall Description................................................................................................................... 2
+2.1 System Overview ..................................................................................................................................................... 2
+Core Capabilities: ...................................................................................................2
+2.2 User Roles and Permissions..................................................................................................................................... 3
+3.Functional Requirements.......................................................................................................... 3
+3.1FR-001: External Visitor Request and Approval....................................................................................................... 3
+3.2FR-002: Internal Ethio telecom Visitor Request and Movement.............................................................................. 4
+3.3 FR-003: Visitor Pre-Registration ............................................................................................................................. 4
+3.4 FR-004: Visitor Scheduling...................................................................................................................................... 5
+3.5FR-005: Digital Check-In and Check-Out................................................................................................................ 5
+3.6 FR-006: Badge Generation and Printing.................................................................................................................. 5
+3.7 FR-007: Notifications and Reminders ..................................................................................................................... 5
+3.8 FR-008: Access Control Integration......................................................................................................................... 5
+3.9 FR-009: Role-Based User Management.................................................................................................................. 6
+3.10 FR-010: Visitor Monitoring and Logs.................................................................................................................... 6
+3.11 FR-011: Alerts and Violations................................................................................................................................ 6
+3.12 FR-012: Reports and Analytics.............................................................................................................................. 6
+3.13 FR-013: System Integration ................................................................................................................................... 6
+3.14 FR-014: System Accessibility and Usability.......................................................................................................... 7
+4.Use case ....................................................................................................................................... 8
+4.1. Use Case Descriptions............................................................................................................................................. 9
+5.Conclusion ................................................................................................................................ 10
+ Functional Requirements Specification (FRS)
+page1
+1. Introduction
+1.1 Purpose
+This document outlines the functional requirements for the Visitor Management System (VMS) to
+improve tracking, registration, and control of visitors across company premises.
+1.2 Scope
+The VMS will streamline check-ins, pre-registrations, access control, notifications, and reporting. It will
+integrate with various subsystems such as FMS, SOC, and gate pass systems, supporting enterprisegrade availability and compliance. Assumption: For all Integration aspects will be defined and
+incorporated after obtaining confirmation from users and requesters. Until then, the scope and approach
+to integration remain tentative and will be documented once the necessary information is gathered.
+1.3 High level process flow
+Visitor Management System Security/ System/ CEO PA Host /ethio staff /external visitor Admin
+Phase
+Start Approve
+request
+yes
+CXO PA
+Review
+Et staff /External
+visitor initiate visit
+using app ,mail and
+physically
+Receptionist
+review visit
+request
+No with justification
+No with justification Accept
+yes
+The system generate
+QR , badge parking
+no and send
+notification to the
+visitor.
+Fill personal
+data + car
+plate
+Visitor arrive
+and cheek in
+and park
+Cheek out
+Generate
+Reports
+System Monitoring &
+Backup
+Role
+Management End
+Notification
+can be by sms
+or mail
+Cheek in can
+be using QR
+or face
+recognition
+CCTV and
+fayda.
+Integration
+with FMS, SOC,
+will be done
+when API is
+completed
+Integration
+with
+ERP(HR)
+ Functional Requirements Specification (FRS)
+page2
+2. Overall Description
+This section provides a high-level understanding of the Visitor Management System (VMS), focusing on
+its purpose, scope, and key user groups. The VMS is intended to streamline and secure the management
+of both external and internal visitors across Ethio telecom sites. It enables pre-registration, digital checkin/check-out, access control integration, badge issuance, and real-time monitoring of visitor activities.
+The system supports integration with multiple internal platforms such as Facility Management System
+(FMS), and Microsoft Outlook for efficient scheduling and compliance.
+By automating visitor workflows, the VMS enhances security, improves operational efficiency, and
+ensures professional experience for visitors.
+2.1 System Overview
+The Visitor Management System (VMS) is a modular, web-enabled platform accessible through internal
+intranet, public internet, mobile devices, and kiosks. It allows designated users (hosts, receptionists,
+security personnel, etc.) to manage and monitor visitor access through defined workflows and access
+policies.
+Core Capabilities:
+• External and internal visitor request and approval workflows
+• Visitor pre-registration and scheduling
+• Digital check-in/check-out through kiosk, reception, or mobile
+• Badge generation and access control enforcement
+• Notifications and reminders via email, SMS, or app
+• Real-time monitoring and historical reporting
+• Integration with security and operational systems e.g. SOC.
+• Identity Verification & Authentication:
+• ID Scanning: Ability to scan and verify government-issued IDs (e.g., Ethiopian National ID,
+passport, driver's license) upon arrival.
+• Facial Recognition/Biometrics (Advanced): Integration with facial recognition or fingerprint
+scanners for higher security areas or frequent visitors, especially in data centers or network hubs.
+• Watchlists/Blocklists: Capability to check visitors against internal "do not admit" lists (e.g.,
+disgruntled former employees, known security threats) and external regulatory/terrorism
+watchlists (where legally permissible and practical).
+• Pre-screening Questionnaires: Customizable questions to screen visitors for health (e.g., during
+pandemics), compliance with safety regulations, or specific security clearances before granting
+access.
+• Physical Access Control System (PACS) Integration: Seamless integration with existing
+access control systems (e.g., card readers if available) to grant temporary, time-limited, and areaspecific access credentials (e.g., temporary keycards, QR codes) upon successful check-in.
+• jh: Enforce escort policies for visitors in sensitive or restricted areas, notifying the host when the
+visitor is checked in and requiring the host to acknowledge responsibility for the escort.
+ Functional Requirements Specification (FRS)
+page3
+• Zone-Based Access: Define and manage access permissions for different security zones within a
+facility.
+• Centralized Management: Manage visitor operations across multiple sites, buildings, and
+regions (critical for Ethio Telecom's widespread network).
+• Automated Invitations: Send email or SMS invitations to visitors with necessary details like
+directions, parking information, QR codes for quick check-in, and safety protocols.
+• Photo Capture: Capture a visitor's photo during check-in for inclusion on their badge and for a
+visual log
+The system ensures data privacy and security through role-based access control and audit logging. It
+supports scalable architecture suitable for multi-site operations and complies with internal security
+standards.
+2.2User Roles and Permissions
+• Admin has Full system configuration and oversight responsibility and Manage users/roles,
+generate reports, configure system, monitor logs/backups.
+• Host Employee Invites and manage visitor appointments, Approve/reject requests, Submit
+requests, pre-register guests, view visit status.
+• Receptionist On site visitor registration, approve/reject requests. Handles front-desk tasks, badge
+printing, and check-in/out Verify identity, capture photo/signature, print badges.
+• Security Staff monitors violations, and responds to alerts, Access visitor logs, receive alerts,
+enforce restrictions.
+• External Visitor Guest who requests or receives access to the premises, submits visit requests,
+checks in/out, receives notifications.
+• Internal Visitor Employee visiting other departments/sites, submit visit request, check in/out,
+receive temporary badge.
+• System Integrator Interface role for integrated systems like FMS, and Data exchange via APIs,
+sync access rights, process events.
+• CXO PA approves or rejects the visit.
+3.Functional Requirements
+3.1FR-001: External Visitor Request and Approval
+• Pre-registration: Allow hosts to pre-register visitors online, sending invitations with QR code or digital
+passes for faster on-site check-in.
+• Visitors shall input personal details, organization, host, purpose and preferred date/time.
+• The request shall be routed to the intended host employee for approval.
+ Functional Requirements Specification (FRS)
+page4
+• Upon host approval, the system shall be pre-register the visitor, send a conformation email/SMS, and
+assigning access rights and badge data.
+• Flexible workflow: tailor check-in flows, questions, and approval process for different types of visitors
+(e.g. contractors, vendors, job applicants, VIPs, general visitors).
+• Real-time Digital Log: Maintain a live, searchable digital log of all visitors currently on-site,
+along with their check-in/out times, host, and purpose of visit.
+• Historical Records: Securely store historical visitor data for audit, compliance, and reporting
+purposes.
+• Search & Filter: Easily search and filter visitor records by various criteria (name, company, date,
+host, status).
+• Self-Service Kiosks: Intuitive touch-screen kiosks for visitors to self-check-in, sign documents, and
+capture photos.
+• Touchless Check-in: QR code scanning or mobile app-based check-in to minimize physical contact.
+• Digital Document Signing: Electronic capture of signatures, safety briefings, terms of access, etc.
+• Badge Printing: Automated printing of professional visitor badges (with photo, name, company, host,
+date, time, and access areas) upon check-in.
+3.2FR-002: Internal Ethio telecom Visitor Request and Movement
+• The system allows Ethio telecom employees to request visits to other sites, departments, or secure zones.
+• The internal visitor request shall include purpose, location, duration and destination unit.
+• Requests shall be approved via designated workflows (e.g. supervisor or location security).
+• Approved internal visitors shall receive temporary access permissions and badge/pass if required.
+• Instant Alers: Notify hosts via SMS, email, or internal chat (e.g. teams) when their visitors
+arrive.
+• Visitor Details in Notification: Include key visitor information in the notification to the host.
+3.3 FR-003: Visitor Pre-Registration
+• Hosts or authorized users shall pre-register both internal and external visitors.
+• Group registration shall be supported.
+• Pre-registration data shall sync with badge generation and access control.
+ Functional Requirements Specification (FRS)
+page5
+3.4 FR-004: Visitor Scheduling
+• The system shall enable visit scheduling with date, time, host and meeting location.
+• Integration with Microsoft outlook calendar shall be supported for both scheduling and reminders.
+3.5FR-005: Digital Check-In and Check-Out
+• Visitors shall check in through kiosks, reception, or mobile terminals.
+• The system shall capture digital signatures, photos and supporting documents as needed.
+• Barcode/QR code scanning shall enable rapid check-in/check-out.
+3.6 FR-006: Badge Generation and Printing
+• The system shall generate visitor badges containing name, photo, organization, host, access level
+and expiration time.
+• Badge types supported shall include adhesive, self-expiring and plastic cards.
+• Internal visitor may receive temporary staff ID or printing gate pass as applicable
+3.7 FR-007: Notifications and Reminders
+• Email, SMS, or app-based notifications shall be sent to visitors and hosts for:
+o Request approval or rejection
+o Check-in confirmation
+o Visit reminders
+o Expired or overstayed visits
+• Hosts shall receive real-time notifications upon visitor arrival.
+3.8 FR-008: Access Control Integration
+• The system shall integrate with physical access systems to allow or restrict movement based on:
+o Visitor type (internal/external)
+o Location
+o Time of access
+o Approval status
+• Restrict employees from accessing visitor data.
+• Blacklist/whitelist checks shall be enforced before access is granted.
+ Functional Requirements Specification (FRS)
+page6
+3.9 FR-009: Role-Based User Management
+• Access to system modules and data shall be controlled based on roles (e.g., admin, host, security,
+reception).
+• Internal users shall be restricted from viewing external visitor data unless authorized.
+3.10 FR-010: Visitor Monitoring and Logs
+• The system should track and log visitor movements across all facilities.
+• Logs shall include check-in/out times, access points used, and locations visited.
+3.11 FR-011: Alerts and Violations
+• The system shall trigger alerts for:
+o Overstayed or expired visits
+o Security rule violations
+o Blacklisted individual attempts
+• Security personnel shall receive real-time alerts via the dashboard or app.
+3.12 FR-012: Reports and Analytics
+• Custom Reports shall be generated for:
+o Visitor counts (internal/external) by site, date, department
+o Visit duration and patterns
+• Export to formats: PDF, Excel, CSV.
+• Schedule automated report email delivery.
+3.13 FR-013: System Integration
+• The system shall integrate with:
+o Gate Pass Systems
+o Physical Access Rights Management
+o SOC, VSS, FMS.
+o Outlook Calendar (for internal scheduling)
+o Employee Directory: Sync with HR systems for accurate employee lists and contact
+information for hosts.
+o SMS/Email Gateways: For sending notifications.
+o CCTV (Desirable): Integrate with surveillance systems for enhanced security monitoring.
+ Functional Requirements Specification (FRS)
+page7
+o National ID Integration: Futureproofing for potential direct integration with a national digital ID
+system.
+• Remark For all Integration aspects will be defined and incorporated after obtaining confirmation
+from users and requesters. Until then, the scope and approach to integration remain tentative and
+will be documented once the necessary information is gathered.
+3.14 FR-014: System Accessibility and Usability
+The system shall be accessible via
+• Internal intranet (for Ethio telecom staff)
+• Internet portal (for external visitors)
+• Mobile and kiosk interfaces
+• Kiosks shall support self-service with voice/text prompts and multi-language support.
+ Functional Requirements Specification (FRS)
+page8
+4.Use case
+Login
+Pre-register
+Check-i n/Check-out
+Approve/reject visit
+Monitor System & Backups
+Send Notifications
+Access Logs
+Generate Reports
+Manage badge /QR
+host/employee/visitor
+VM system
+Receptionist Admin
+Security
+ Functional Requirements Specification (FRS)
+page9
+4.1. Use Case Descriptions
+Use Case Descriptions
+Use Case
+Actor Description/Exceptions Flow:
+1. Pre-register
+Visitor
+Host/Employee/visitor
+Hosts pre-register guests via intranet,
+internet, or Outlook.
+1. Host fills in visitors’
+details.
+2. Schedule time and
+location.
+3. System sends appointment
+notification to visitors and
+security.
+2. Visitor Check-in /
+Check-out
+Visitor, Receptionist,
+Security
+Visitors check in via self-kiosk,
+receptionist desk, or security station.
+1. Identity verified via
+barcode, biometric, or camera.
+2. Photo and signature
+captured.
+3. System logs timestamp and
+alerts host.
+3. Badge
+Management
+Receptionist, VMS
+System
+The system prints visitor badge with
+relevant access and expiry info.
+1. Badge generated after
+check-in.
+2. Badge design based on
+rules and policy.
+4. Access
+Authorization
+Security, System VMS grants or denies physical access
+based on policy.
+1. Check the badge and gate
+pass.
+2. Validate via API with
+access control.
+5. Send Notifications
+System Notify hosts and visitors about status
+changes or alerts.
+1. Event triggered (check-in,
+overstay, security breach).
+2. Send SMS, email, or app
+alert.
+6. Generate Reports
+Admin View or export visitor traffic and
+historical logs.
+1. Admin selects report type
+and parameters.
+2. System displays or exports
+report.
+7. System Monitoring
+& Backup
+IT Admin Monitor system health and schedule
+backups.
+1. Access admin console.
+2. Monitor CPU/RAM/DB.
+3. Configure and run backups.
+8. Role Management
+System Admin Define access permissions by user
+roles.
+1. Create roles (Admin, Host,
+Security, etc.).
+2. Assign permissions.
+ Functional Requirements Specification (FRS)
+page10
+5.Conclusion
+The Visitor Management System (VMS) outlined in this document is designed to enhance the security,
+efficiency, and transparency of visitor handling across Ethio telecom facilities. By automating the end-toend process from visitor requests and scheduling to check-in, badge issuance, and access control the
+system supports both operational excellence and regulatory compliance.
+Through integration with existing systems such as FMS, SOC, and Microsoft Outlook, the VMS ensures
+seamless coordination between departments and a unified approach to visitor management. Role-based
+access controls, real-time monitoring, alert mechanisms, and detailed reporting further ensure that all
+visitor interactions are secure, auditable, and well-managed.
+Once implemented, the VMS will contribute significantly to improving workplace safety, enhancing
+visitor experience, and optimizing administrative processes.

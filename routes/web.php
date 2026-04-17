@@ -2,10 +2,22 @@
 
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\VisitDocumentController;
+use App\Http\Controllers\QrCheckInController;
 
 Route::get('/', function () {
-    return redirect('/admin');
+    return redirect('/visit-request');
 });
+
+// Public visit request portal (no auth)
+Route::get('/visit-request', \App\Livewire\PublicVisitRequest::class)->name('visit.request');
+Route::get('/group-visit', \App\Livewire\GroupVisitRequest::class)->name('visit.group');
+
+// QR scan kiosk page (FR-005 / FR-014)
+Route::get('/kiosk', [QrCheckInController::class, 'scanPage'])->name('kiosk');
+
+// QR check-in / check-out API (FR-005)
+Route::post('/api/qr/check-in', [QrCheckInController::class, 'checkIn'])->name('api.qr.checkin');
+Route::post('/api/qr/check-out', [QrCheckInController::class, 'checkOut'])->name('api.qr.checkout');
 
 // Visit document routes (protected by auth)
 Route::middleware('auth')->group(function () {
