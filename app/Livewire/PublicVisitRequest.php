@@ -105,6 +105,7 @@ class PublicVisitRequest extends Component
 
         // Determine initial status: auto-approve for whitelisted (FR-008) or internal visitors (FR-002)
         $autoApprove = false;
+        $requiresSupervisor = false;
 
         // Whitelisted visitor with valid expiry
         if ($visitor->is_whitelisted) {
@@ -113,10 +114,19 @@ class PublicVisitRequest extends Component
             }
         }
 
-        // Internal visitors to non-restricted zones are auto-approved (FR-002)
+        // FR-002: Internal visitor workflow
         if ($this->visitor_type === 'internal' && $this->zone_id) {
             $zone = \App\Models\Zone::find($this->zone_id);
-            if ($zone && !in_array($zone->security_level, ['restricted', 'high_security'])) {
+            if ($zone && in_array($zone->security_level, ['restricted', 'high_security'])) {
+                // Restricted zones require supervisor approval for internal visitors
+                $host = User::find($this->host_id);
+                if ($host && $host->supervisor_id) {
+                    $requiresSupervisor = true;
+                    $autoApprove = false;
+                }
+                // If no supervisor assigned, falls through to normal pending workflow
+            } else {
+                // Non-restricted zones: auto-approve internal visitors
                 $autoApprove = true;
             }
         }
@@ -134,7 +144,9 @@ class PublicVisitRequest extends Component
             'category' => $this->category,
             'status' => $status,
             'scheduled_at' => $this->scheduled_at,
-            'notes' => $this->notes,
+            'notes' => $requiresSupervisor
+                ? ($this->notes ? $this->notes . ' | ' : '') . '[Requires supervisor approval — restricted zone]'
+                : $this->notes,
         ]);
 
         // Generate QR code for approved visits
@@ -146,6 +158,16 @@ class PublicVisitRequest extends Component
             $visit->load(['visitor', 'host', 'site', 'zone']);
             if ($visitor->email) {
                 $visitor->notify(new \App\Notifications\VisitApprovedNotification($visit));
+            }
+        }
+
+        // FR-002: Notify supervisor for restricted zone internal visits
+        if ($requiresSupervisor) {
+            $host = User::find($this->host_id);
+            $supervisor = $host?->supervisor;
+            if ($supervisor) {
+                $visit->load(['visitor', 'host', 'site', 'zone']);
+                $supervisor->notify(new NewVisitRequestNotification($visit));
             }
         }
 

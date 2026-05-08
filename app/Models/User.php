@@ -16,7 +16,7 @@ class User extends Authenticatable implements FilamentUser
 
     protected $fillable = [
         'name', 'email', 'password', 'phone',
-        'employee_id', 'role', 'site_id', 'department_id', 'is_active',
+        'employee_id', 'role', 'site_id', 'department_id', 'supervisor_id', 'is_active',
     ];
 
     protected $hidden = ['password', 'remember_token'];
@@ -51,6 +51,16 @@ class User extends Authenticatable implements FilamentUser
     public function department(): BelongsTo
     {
         return $this->belongsTo(Department::class);
+    }
+
+    public function supervisor(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'supervisor_id');
+    }
+
+    public function subordinates(): HasMany
+    {
+        return $this->hasMany(User::class, 'supervisor_id');
     }
 
     public function hostedVisits(): HasMany

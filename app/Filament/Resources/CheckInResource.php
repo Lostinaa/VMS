@@ -53,8 +53,27 @@ class CheckInResource extends Resource
                 Forms\Components\FileUpload::make('signature_path')
                     ->image()->directory('checkins/signatures')->label('Signature'),
                 Forms\Components\TextInput::make('badge_number'),
-                Forms\Components\Textarea::make('remarks')->rows(2),
+                Forms\Components\Select::make('escort_id')
+                    ->relationship('escort', 'name')
+                    ->preload()->searchable()
+                    ->label('Escort (FR-008)')
+                    ->helperText('Required for restricted zones'),
+                Forms\Components\Textarea::make('remarks')->rows(2)->columnSpanFull(),
             ])->columns(2),
+
+            Schemas\Components\Section::make('Badge')->schema([
+                Forms\Components\Select::make('badge_type')
+                    ->label('Badge Type (FR-006)')
+                    ->options([
+                        'adhesive' => 'Adhesive Sticker',
+                        'self_expiring' => 'Self-Expiring',
+                        'plastic_card' => 'Plastic Card',
+                        'temporary_staff_id' => 'Temporary Staff ID',
+                        'gate_pass' => 'Gate Pass',
+                    ])
+                    ->default('adhesive')
+                    ->helperText('Select the type of physical badge to issue'),
+            ]),
         ]);
     }
 
@@ -68,6 +87,8 @@ class CheckInResource extends Resource
             Tables\Columns\TextColumn::make('checked_out_at')->dateTime('M d, H:i')->sortable()
                 ->placeholder('Still on-site')->color('warning'),
             Tables\Columns\TextColumn::make('badge_number')->badge(),
+            Tables\Columns\TextColumn::make('escort.name')->label('Escort')->placeholder('—')
+                ->toggleable(isToggledHiddenByDefault: true),
             Tables\Columns\TextColumn::make('checkedInBy.name')->label('By')->toggleable(isToggledHiddenByDefault: true),
         ])
             ->defaultSort('checked_in_at', 'desc')

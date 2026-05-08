@@ -4,6 +4,7 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\HasOne;
 
 class CheckIn extends Model
@@ -11,7 +12,7 @@ class CheckIn extends Model
     protected $fillable = [
         'visit_request_id', 'visitor_id', 'checked_in_by',
         'checked_in_at', 'checked_out_at', 'checked_out_by',
-        'photo_path', 'signature_path', 'badge_number',
+        'escort_id', 'photo_path', 'signature_path', 'badge_number',
         'qr_code', 'checked_in_via_qr', 'remarks',
     ];
 
@@ -43,5 +44,20 @@ class CheckIn extends Model
     public function badge(): HasOne
     {
         return $this->hasOne(Badge::class);
+    }
+
+    public function escort(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'escort_id');
+    }
+
+    public function screeningResponses(): HasMany
+    {
+        return $this->hasMany(ScreeningResponse::class);
+    }
+
+    public function documents(): HasMany
+    {
+        return $this->hasMany(CheckInDocument::class);
     }
 }

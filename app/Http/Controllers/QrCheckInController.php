@@ -2,7 +2,11 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Alert;
 use App\Models\CheckIn;
+use App\Models\CheckInDocument;
+use App\Models\ScreeningQuestion;
+use App\Models\ScreeningResponse;
 use App\Models\VisitRequest;
 use App\Models\VisitorLog;
 use App\Notifications\VisitorCheckedInNotification;
@@ -13,6 +17,8 @@ class QrCheckInController extends Controller
     /**
      * FR-005: QR code scan check-in endpoint.
      * Validates the QR code and auto-creates a check-in record.
+     * FR-001: Pre-screening questionnaires enforced.
+     * FR-008: Escort policy enforcement for restricted zones.
      */
     public function checkIn(Request $request)
     {
@@ -50,7 +56,7 @@ class QrCheckInController extends Controller
         // Check blacklist
         if ($visitRequest->visitor->is_blacklisted) {
             // Create alert for blacklisted visitor attempt
-            \App\Models\Alert::create([
+            Alert::create([
                 'type' => 'blacklist',
                 'severity' => 'critical',
                 'visit_request_id' => $visitRequest->id,
@@ -61,13 +67,73 @@ class QrCheckInController extends Controller
             return response()->json(['success' => false, 'message' => 'Check-in denied. Please contact security.'], 403);
         }
 
+        // FR-008: Escort policy enforcement
+        $escortRequired = $visitRequest->zone?->escort_required ?? false;
+        $escortId = $request->input('escort_id');
+
+        if ($escortRequired && !$escortId) {
+            return response()->json([
+                'success' => false,
+                'message' => 'This zone requires an escort. Please select an escort to proceed.',
+                'escort_required' => true,
+            ], 422);
+        }
+
+        // FR-001: Validate screening responses
+        $screeningResponses = $request->input('screening_responses', []);
+        $visitorType = $visitRequest->visitor_type ?? 'external';
+        $requiredQuestions = ScreeningQuestion::forVisitorType($visitorType)
+            ->where('is_required', true);
+
+        foreach ($requiredQuestions as $question) {
+            $response = collect($screeningResponses)->firstWhere('question_id', $question->id);
+            if (!$response || empty($response['response'])) {
+                return response()->json([
+                    'success' => false,
+                    'message' => "Please answer all required screening questions.",
+                    'screening_required' => true,
+                ], 422);
+            }
+        }
+
         // Create check-in record
         $checkIn = CheckIn::create([
             'visit_request_id' => $visitRequest->id,
             'visitor_id' => $visitRequest->visitor_id,
             'checked_in_at' => now(),
             'checked_in_via_qr' => true,
+            'escort_id' => $escortId ?: null,
         ]);
+
+        // Save screening responses (FR-001)
+        foreach ($screeningResponses as $sr) {
+            if (!isset($sr['question_id']) || !isset($sr['response'])) continue;
+
+            $question = ScreeningQuestion::find($sr['question_id']);
+            $flagged = false;
+
+            if ($question && $question->flag_answer) {
+                $flagged = strtolower(trim($sr['response'])) === strtolower(trim($question->flag_answer));
+            }
+
+            ScreeningResponse::create([
+                'check_in_id' => $checkIn->id,
+                'screening_question_id' => $sr['question_id'],
+                'response' => $sr['response'],
+                'flagged' => $flagged,
+            ]);
+
+            // Create alert for flagged responses
+            if ($flagged) {
+                Alert::create([
+                    'type' => 'screening',
+                    'severity' => 'high',
+                    'visit_request_id' => $visitRequest->id,
+                    'visitor_id' => $visitRequest->visitor_id,
+                    'message' => "Screening flag: {$visitRequest->visitor->full_name} answered \"{$sr['response']}\" to \"{$question->question_text}\".",
+                ]);
+            }
+        }
 
         // Save photo from kiosk camera (FR-005)
         if ($request->has('photo') && str_starts_with($request->input('photo'), 'data:image')) {
@@ -92,6 +158,19 @@ class QrCheckInController extends Controller
             $sigPath = 'checkins/signatures/' . $checkIn->id . '.png';
             \Storage::disk('public')->put($sigPath, base64_decode($sigData));
             $checkIn->update(['signature_path' => $sigPath]);
+        }
+
+        // Save uploaded documents (FR-005)
+        if ($request->hasFile('documents')) {
+            foreach ($request->file('documents') as $file) {
+                $path = $file->store('checkins/documents/' . $checkIn->id, 'public');
+                CheckInDocument::create([
+                    'check_in_id' => $checkIn->id,
+                    'file_path' => $path,
+                    'file_name' => $file->getClientOriginalName(),
+                    'document_type' => $request->input('document_type', 'other'),
+                ]);
+            }
         }
 
         // Update visit status
@@ -126,7 +205,8 @@ class QrCheckInController extends Controller
                 'purpose' => $visitRequest->purpose,
                 'checked_in_at' => now()->format('M d, Y H:i'),
                 'badge_number' => $checkIn->badge_number,
-                'escort_required' => $visitRequest->zone?->escort_required ?? false,
+                'escort_required' => $escortRequired,
+                'escort_id' => $escortId,
             ],
         ]);
     }
@@ -194,5 +274,47 @@ class QrCheckInController extends Controller
     public function scanPage()
     {
         return view('visits.qr-scan');
+    }
+
+    /**
+     * FR-001: Return active screening questions for a visitor type.
+     * Called by kiosk JS to dynamically render the questionnaire.
+     */
+    public function screeningQuestions(Request $request)
+    {
+        $type = $request->input('visitor_type', 'external');
+        $questions = ScreeningQuestion::forVisitorType($type);
+
+        return response()->json([
+            'success' => true,
+            'data' => $questions->map(fn ($q) => [
+                'id' => $q->id,
+                'question_text' => $q->question_text,
+                'question_text_am' => $q->question_text_am,
+                'type' => $q->type,
+                'options' => $q->options,
+                'is_required' => $q->is_required,
+            ]),
+        ]);
+    }
+
+    /**
+     * FR-008: Return list of available escorts (staff) for a given site.
+     */
+    public function availableEscorts(Request $request)
+    {
+        $siteId = $request->input('site_id');
+
+        $escorts = \App\Models\User::where('is_active', true)
+            ->whereIn('role', ['host', 'security', 'receptionist'])
+            ->when($siteId, fn ($q) => $q->where('site_id', $siteId))
+            ->select('id', 'name', 'role')
+            ->orderBy('name')
+            ->get();
+
+        return response()->json([
+            'success' => true,
+            'data' => $escorts,
+        ]);
     }
 }

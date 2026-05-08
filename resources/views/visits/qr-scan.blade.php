@@ -170,6 +170,7 @@
 
     <!-- Language Switcher (FR-014) -->
     <div class="lang-switch">
+        <button class="lang-btn" onclick="toggleVoice()" id="voiceBtn" title="Toggle voice prompts">🔊</button>
         <button class="lang-btn active" onclick="setLang('en')" id="langEn">EN</button>
         <button class="lang-btn" onclick="setLang('am')" id="langAm">አማ</button>
     </div>
@@ -199,8 +200,33 @@
             </div>
         </div>
 
-        <!-- Step 2: Photo Capture (FR-005) -->
+        <!-- Step 2: Screening Questionnaire (FR-001) -->
         <div class="card step" id="step2">
+            <h2 data-i18n="screening_title">📋 Health & Safety Screening</h2>
+            <p class="subtitle" data-i18n="screening_subtitle">Please answer the following questions before proceeding.</p>
+            <div id="screeningQuestions" style="text-align:left; margin-bottom:1rem;"></div>
+            <div class="btn-group">
+                <button class="btn btn-checkin" onclick="submitScreening()" data-i18n="continue">Continue →</button>
+            </div>
+            <div id="screeningEmpty" style="display:none; text-align:center; color:var(--et-muted); padding:1rem;">
+                <p data-i18n="no_screening">No screening questions required. Proceeding...</p>
+            </div>
+        </div>
+
+        <!-- Step 3: Escort Selection (FR-008) -->
+        <div class="card step" id="step3">
+            <h2 data-i18n="escort_title">🛡️ Escort Required</h2>
+            <p class="subtitle" data-i18n="escort_subtitle">This zone requires an escort. Please select your assigned escort.</p>
+            <select id="escortSelect" class="scan-input" style="font-size:0.95rem; text-align:left;">
+                <option value="" data-i18n="select_escort">-- Select Escort --</option>
+            </select>
+            <div class="btn-group">
+                <button class="btn btn-checkin" onclick="confirmEscort()" data-i18n="continue">Continue →</button>
+            </div>
+        </div>
+
+        <!-- Step 4: Photo Capture (FR-005) -->
+        <div class="card step" id="step4">
             <h2 data-i18n="photo_title">📷 Photo Capture</h2>
             <p class="subtitle" data-i18n="photo_subtitle">Please look at the camera and take your photo for the visitor badge.</p>
             <div class="camera-container" id="cameraBox">
@@ -213,20 +239,24 @@
                 <button class="btn btn-secondary" onclick="retakePhoto()" id="btnRetake" style="display:none" data-i18n="retake">↻ Retake</button>
             </div>
             <div class="btn-group" id="photoNext" style="display:none">
-                <button class="btn btn-checkin" onclick="goToStep3()" data-i18n="continue">Continue →</button>
+                <button class="btn btn-checkin" onclick="goToStep5()" data-i18n="continue">Continue →</button>
             </div>
             <div class="btn-group">
                 <button class="btn btn-secondary" onclick="skipPhoto()" data-i18n="skip">Skip</button>
             </div>
         </div>
 
-        <!-- Step 3: Digital Signature (FR-005) -->
-        <div class="card step" id="step3">
+        <!-- Step 5: Signature + Document Upload (FR-005) -->
+        <div class="card step" id="step5">
             <h2 data-i18n="sig_title">✍️ Digital Signature</h2>
             <p class="subtitle" data-i18n="sig_subtitle">Please sign below to acknowledge the visitor terms and safety guidelines.</p>
             <canvas id="sigCanvas" class="sig-canvas"></canvas>
             <p class="sig-label" data-i18n="sig_hint">Draw your signature with mouse or finger</p>
-            <div class="btn-group">
+            <div style="margin-top:1rem; text-align:left;">
+                <label style="font-size:0.85rem; color:var(--et-muted); display:block; margin-bottom:0.5rem;" data-i18n="doc_label">📎 Upload supporting documents (optional):</label>
+                <input type="file" id="docUpload" multiple accept=".pdf,.jpg,.jpeg,.png,.doc,.docx" style="font-size:0.8rem; color:var(--et-text);">
+            </div>
+            <div class="btn-group" style="margin-top:1rem;">
                 <button class="btn btn-secondary" onclick="clearSignature()" data-i18n="clear">Clear</button>
                 <button class="btn btn-checkin" onclick="completeCheckIn()" data-i18n="complete_checkin">✓ Complete Check-In</button>
             </div>
@@ -242,42 +272,44 @@
         // --- i18n (FR-014) ---
         const translations = {
             en: {
-                kiosk_title: 'Self-Service Kiosk',
-                scan_title: '📱 Scan Your QR Code',
+                kiosk_title: 'Self-Service Kiosk', scan_title: '📱 Scan Your QR Code',
                 scan_subtitle: 'Scan or enter your QR code below to check in or check out.',
-                scan_placeholder: 'Scan QR code here…',
-                check_in: '✓ Check In',
-                check_out: '← Check Out',
+                scan_placeholder: 'Scan QR code here…', check_in: '✓ Check In', check_out: '← Check Out',
+                screening_title: '📋 Health & Safety Screening',
+                screening_subtitle: 'Please answer the following questions before proceeding.',
+                no_screening: 'No screening questions required. Proceeding...',
+                escort_title: '🛡️ Escort Required',
+                escort_subtitle: 'This zone requires an escort. Please select your assigned escort.',
+                select_escort: '-- Select Escort --',
                 photo_title: '📷 Photo Capture',
                 photo_subtitle: 'Please look at the camera and take your photo for the visitor badge.',
-                take_photo: '📸 Take Photo',
-                retake: '↻ Retake',
-                continue: 'Continue →',
-                skip: 'Skip',
+                take_photo: '📸 Take Photo', retake: '↻ Retake', continue: 'Continue →', skip: 'Skip',
                 sig_title: '✍️ Digital Signature',
                 sig_subtitle: 'Please sign below to acknowledge the visitor terms and safety guidelines.',
-                sig_hint: 'Draw your signature with mouse or finger',
-                clear: 'Clear',
+                sig_hint: 'Draw your signature with mouse or finger', clear: 'Clear',
                 complete_checkin: '✓ Complete Check-In',
+                doc_label: '📎 Upload supporting documents (optional):',
+                voice_on: '🔊', voice_off: '🔇',
             },
             am: {
-                kiosk_title: 'የራስ አገልግሎት ኪዮስክ',
-                scan_title: '📱 የQR ኮድ ይቃኙ',
+                kiosk_title: 'የራስ አገልግሎት ኪዮስክ', scan_title: '📱 የQR ኮድ ይቃኙ',
                 scan_subtitle: 'ለመግባት ወይም ለመውጣት የQR ኮድዎን ከዚህ ያስገቡ።',
-                scan_placeholder: 'የQR ኮድ እዚህ ያስገቡ…',
-                check_in: '✓ ይግቡ',
-                check_out: '← ይውጡ',
+                scan_placeholder: 'የQR ኮድ እዚህ ያስገቡ…', check_in: '✓ ይግቡ', check_out: '← ይውጡ',
+                screening_title: '📋 የጤና እና ደህንነት ቅኝት',
+                screening_subtitle: 'እባክዎ ከመቀጠልዎ በፊት የሚከተሉትን ጥያቄዎች ይመልሱ።',
+                no_screening: 'የቅኝት ጥያቄዎች አያስፈልጉም። በመቀጠል ላይ...',
+                escort_title: '🛡️ አጃቢ ያስፈልጋል',
+                escort_subtitle: 'ይህ ቦታ አጃቢ ይፈልጋል። እባክዎ አጃቢዎን ይምረጡ።',
+                select_escort: '-- አጃቢ ይምረጡ --',
                 photo_title: '📷 ፎቶ ማንሣት',
                 photo_subtitle: 'እባክዎ ካሜራውን ይመልከቱ እና ለባጅ ፎቶዎን ያንሱ።',
-                take_photo: '📸 ፎቶ ያንሱ',
-                retake: '↻ እንደገና ያንሱ',
-                continue: 'ቀጥል →',
-                skip: 'ዝለል',
+                take_photo: '📸 ፎቶ ያንሱ', retake: '↻ እንደገና ያንሱ', continue: 'ቀጥል →', skip: 'ዝለል',
                 sig_title: '✍️ ዲጂታል ፊርማ',
                 sig_subtitle: 'እባክዎ የጎብኚ ደንቦችን እና የደህንነት መመሪያዎችን ለማረጋገጥ ከዚህ ይፈርሙ።',
-                sig_hint: 'ፊርማዎን በማውስ ወይም በጣት ይሳሉ',
-                clear: 'ያጽዱ',
+                sig_hint: 'ፊርማዎን በማውስ ወይም በጣት ይሳሉ', clear: 'ያጽዱ',
                 complete_checkin: '✓ ግቢን ያጠናቅቁ',
+                doc_label: '📎 ሰነዶችን ያስገቡ (አማራጭ):',
+                voice_on: '🔊', voice_off: '🔇',
             }
         };
         let currentLang = 'en';
@@ -302,17 +334,32 @@
         let capturedPhoto = null;
         let capturedSignature = null;
         let cameraStream = null;
+        let screeningData = [];
+        let selectedEscortId = null;
+        let visitData = null; // stored from QR lookup
+        let voiceEnabled = localStorage.getItem('vms-voice') !== 'off';
+
+        // --- Voice Prompts (FR-014) ---
+        function speak(text) {
+            if (!voiceEnabled || !window.speechSynthesis) return;
+            window.speechSynthesis.cancel();
+            const utter = new SpeechSynthesisUtterance(text);
+            utter.lang = currentLang === 'am' ? 'am-ET' : 'en-US';
+            utter.rate = 0.9;
+            window.speechSynthesis.speak(utter);
+        }
 
         // --- Step 1: QR Scan ---
         document.getElementById('qrInput').addEventListener('keypress', e => {
             if (e.key === 'Enter') { e.preventDefault(); startCheckIn(); }
         });
 
-        function startCheckIn() {
+        async function startCheckIn() {
             currentQr = document.getElementById('qrInput').value.trim();
             if (!currentQr) return;
+            speak(currentLang === 'am' ? 'እባክዎ ጥያቄዎችን ይመልሱ' : 'Please answer the screening questions.');
             showStep(2);
-            startCamera();
+            await loadScreeningQuestions();
         }
 
         async function doCheckOut() {
@@ -321,31 +368,113 @@
             await sendRequest('/api/qr/check-out', qr);
         }
 
-        // --- Step 2: Camera (FR-005) ---
+        // --- Step 2: Screening (FR-001) ---
+        async function loadScreeningQuestions() {
+            try {
+                const res = await fetch('/api/screening-questions?visitor_type=external');
+                const json = await res.json();
+                const container = document.getElementById('screeningQuestions');
+                container.innerHTML = '';
+
+                if (!json.data || json.data.length === 0) {
+                    document.getElementById('screeningEmpty').style.display = 'block';
+                    setTimeout(() => { document.getElementById('screeningEmpty').style.display = 'none'; goToEscortOrPhoto(); }, 1500);
+                    return;
+                }
+
+                json.data.forEach(q => {
+                    const qText = currentLang === 'am' && q.question_text_am ? q.question_text_am : q.question_text;
+                    let html = `<div style="margin-bottom:1rem; padding:0.75rem; border-radius:10px; border:1px solid var(--et-border); background:var(--et-input-bg);">`;
+                    html += `<p style="font-size:0.9rem; font-weight:600; margin-bottom:0.5rem; color:var(--et-text-heading);">${qText}${q.is_required ? ' <span style="color:#ef4444;">*</span>' : ''}</p>`;
+
+                    if (q.type === 'yes_no') {
+                        html += `<label style="margin-right:1rem;cursor:pointer;"><input type="radio" name="sq_${q.id}" value="yes"> Yes</label>`;
+                        html += `<label style="cursor:pointer;"><input type="radio" name="sq_${q.id}" value="no"> No</label>`;
+                    } else if (q.type === 'text') {
+                        html += `<input type="text" class="scan-input" style="font-size:0.85rem;padding:0.5rem;margin-top:0.25rem;" data-sq="${q.id}">`;
+                    } else if (q.type === 'select' && q.options) {
+                        html += `<select class="scan-input" style="font-size:0.85rem;padding:0.5rem;text-align:left;" data-sq="${q.id}"><option value="">--</option>`;
+                        q.options.forEach(o => { html += `<option value="${o}">${o}</option>`; });
+                        html += `</select>`;
+                    }
+                    html += `</div>`;
+                    container.innerHTML += html;
+                });
+                screeningData = json.data;
+            } catch (e) { console.warn('Screening fetch error', e); goToEscortOrPhoto(); }
+        }
+
+        function submitScreening() {
+            const responses = [];
+            for (const q of screeningData) {
+                let val = '';
+                if (q.type === 'yes_no') {
+                    const checked = document.querySelector(`input[name="sq_${q.id}"]:checked`);
+                    val = checked ? checked.value : '';
+                } else {
+                    const el = document.querySelector(`[data-sq="${q.id}"]`);
+                    val = el ? el.value : '';
+                }
+                if (q.is_required && !val) {
+                    alert(currentLang === 'am' ? 'እባክዎ ሁሉንም ጥያቄዎች ይመልሱ።' : 'Please answer all required questions.');
+                    return;
+                }
+                responses.push({ question_id: q.id, response: val });
+            }
+            window._screeningResponses = responses;
+            goToEscortOrPhoto();
+        }
+
+        // --- Step 3: Escort (FR-008) ---
+        async function goToEscortOrPhoto() {
+            // Check if escort is required by attempting a dry check-in
+            // For now, show escort step and let user skip if not needed
+            try {
+                const res = await fetch('/api/escorts');
+                const json = await res.json();
+                if (json.data && json.data.length > 0) {
+                    const sel = document.getElementById('escortSelect');
+                    sel.innerHTML = '<option value="">-- Select Escort --</option>';
+                    json.data.forEach(e => {
+                        sel.innerHTML += `<option value="${e.id}">${e.name} (${e.role})</option>`;
+                    });
+                    speak(currentLang === 'am' ? 'እባክዎ አጃቢዎን ይምረጡ' : 'Please select your escort if required.');
+                    showStep(3);
+                    return;
+                }
+            } catch (e) { console.warn('Escorts fetch error', e); }
+            goToPhoto();
+        }
+
+        function confirmEscort() {
+            selectedEscortId = document.getElementById('escortSelect').value || null;
+            goToPhoto();
+        }
+
+        function goToPhoto() {
+            speak(currentLang === 'am' ? 'እባክዎ ፎቶዎን ያንሱ' : 'Please take your photo.');
+            showStep(4);
+            startCamera();
+        }
+
+        // --- Step 4: Camera (FR-005) ---
         async function startCamera() {
             try {
                 cameraStream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'user', width: 480, height: 480 } });
                 document.getElementById('cameraVideo').srcObject = cameraStream;
-            } catch (e) {
-                console.warn('Camera not available:', e);
-            }
+            } catch (e) { console.warn('Camera not available:', e); }
         }
 
         function stopCamera() {
-            if (cameraStream) {
-                cameraStream.getTracks().forEach(t => t.stop());
-                cameraStream = null;
-            }
+            if (cameraStream) { cameraStream.getTracks().forEach(t => t.stop()); cameraStream = null; }
         }
 
         function capturePhoto() {
             const video = document.getElementById('cameraVideo');
             const canvas = document.getElementById('cameraCanvas');
             canvas.width = 480; canvas.height = 480;
-            const ctx = canvas.getContext('2d');
-            ctx.drawImage(video, 0, 0, 480, 480);
+            canvas.getContext('2d').drawImage(video, 0, 0, 480, 480);
             capturedPhoto = canvas.toDataURL('image/jpeg', 0.8);
-
             document.getElementById('photoPreview').src = capturedPhoto;
             document.getElementById('photoPreview').style.display = 'block';
             document.getElementById('btnCapture').style.display = 'none';
@@ -363,28 +492,29 @@
             startCamera();
         }
 
-        function skipPhoto() { capturedPhoto = null; stopCamera(); goToStep3(); }
-        function goToStep3() { stopCamera(); showStep(3); initSignaturePad(); }
+        function skipPhoto() { capturedPhoto = null; stopCamera(); goToStep5(); }
+        function goToStep5() {
+            stopCamera();
+            speak(currentLang === 'am' ? 'እባክዎ ይፈርሙ' : 'Please sign to complete check-in.');
+            showStep(5);
+            initSignaturePad();
+        }
 
-        // --- Step 3: Signature (FR-005) ---
+        // --- Step 5: Signature (FR-005) ---
         let sigCtx, sigDrawing = false;
 
         function initSignaturePad() {
             const canvas = document.getElementById('sigCanvas');
-            canvas.width = canvas.offsetWidth;
-            canvas.height = 150;
+            canvas.width = canvas.offsetWidth; canvas.height = 150;
             sigCtx = canvas.getContext('2d');
-            sigCtx.strokeStyle = '#e2e8f0';
-            sigCtx.lineWidth = 2.5;
-            sigCtx.lineCap = 'round';
-            sigCtx.lineJoin = 'round';
+            sigCtx.strokeStyle = '#e2e8f0'; sigCtx.lineWidth = 2.5;
+            sigCtx.lineCap = 'round'; sigCtx.lineJoin = 'round';
 
             const getPos = (e) => {
                 const rect = canvas.getBoundingClientRect();
                 const touch = e.touches ? e.touches[0] : e;
                 return { x: touch.clientX - rect.left, y: touch.clientY - rect.top };
             };
-
             const startDraw = (e) => { sigDrawing = true; const p = getPos(e); sigCtx.beginPath(); sigCtx.moveTo(p.x, p.y); };
             const draw = (e) => { if (!sigDrawing) return; e.preventDefault(); const p = getPos(e); sigCtx.lineTo(p.x, p.y); sigCtx.stroke(); };
             const stopDraw = () => { sigDrawing = false; };
@@ -408,26 +538,29 @@
 
         // --- Complete Check-In ---
         async function completeCheckIn() {
-            const sigCanvas = document.getElementById('sigCanvas');
-            capturedSignature = sigCanvas.toDataURL('image/png');
+            capturedSignature = document.getElementById('sigCanvas').toDataURL('image/png');
 
-            const body = { qr_code: currentQr };
+            const body = {
+                qr_code: currentQr,
+                screening_responses: window._screeningResponses || [],
+            };
             if (capturedPhoto) body.photo = capturedPhoto;
             if (capturedSignature) body.signature = capturedSignature;
+            if (selectedEscortId) body.escort_id = selectedEscortId;
 
             await sendRequest('/api/qr/check-in', currentQr, body);
             showStep(1);
             document.getElementById('qrInput').value = '';
             document.getElementById('qrInput').focus();
-            capturedPhoto = null;
-            capturedSignature = null;
+            capturedPhoto = null; capturedSignature = null;
+            selectedEscortId = null; window._screeningResponses = [];
+            speak(currentLang === 'am' ? 'ግቢ ተጠናቅቋል' : 'Check-in complete. Thank you.');
         }
 
         // --- Request handler ---
         async function sendRequest(url, qrCode, extraBody = null) {
             document.getElementById('btnCheckIn').disabled = true;
             document.getElementById('btnCheckOut').disabled = true;
-
             const body = extraBody || { qr_code: qrCode };
             if (!body.qr_code) body.qr_code = qrCode;
 
@@ -438,7 +571,6 @@
                     body: JSON.stringify(body),
                 });
                 const data = await res.json();
-
                 const resultDiv = document.getElementById('result');
                 const resultTitle = document.getElementById('resultTitle');
                 const resultDetails = document.getElementById('resultDetails');
@@ -469,12 +601,10 @@
                 setTimeout(() => { resultDiv.style.display = 'none'; }, 10000);
             } catch (err) {
                 const resultDiv = document.getElementById('result');
-                resultDiv.style.display = 'block';
-                resultDiv.className = 'result error';
+                resultDiv.style.display = 'block'; resultDiv.className = 'result error';
                 document.getElementById('resultTitle').textContent = '❌ Connection error';
                 document.getElementById('resultDetails').innerHTML = 'Please try again or contact the front desk.';
             }
-
             document.getElementById('btnCheckIn').disabled = false;
             document.getElementById('btnCheckOut').disabled = false;
         }
@@ -486,6 +616,20 @@
         }
     </script>
     <script>
+        // --- Voice Toggle ---
+        function toggleVoice() {
+            voiceEnabled = !voiceEnabled;
+            localStorage.setItem('vms-voice', voiceEnabled ? 'on' : 'off');
+            document.getElementById('voiceBtn').textContent = voiceEnabled ? '🔊' : '🔇';
+            document.getElementById('voiceBtn').classList.toggle('active', voiceEnabled);
+        }
+        (function() {
+            const v = localStorage.getItem('vms-voice');
+            if (v === 'off') { voiceEnabled = false; document.getElementById('voiceBtn').textContent = '🔇'; }
+            else { document.getElementById('voiceBtn').classList.add('active'); }
+        })();
+
+        // --- Theme ---
         function toggleTheme() {
             const html = document.documentElement;
             const next = html.getAttribute('data-theme') === 'dark' ? 'light' : 'dark';

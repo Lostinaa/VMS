@@ -48,6 +48,11 @@ class UserResource extends Resource
                 Forms\Components\Select::make('department_id')
                     ->relationship('department', 'name')
                     ->preload()->searchable(),
+                Forms\Components\Select::make('supervisor_id')
+                    ->relationship('supervisor', 'name')
+                    ->preload()->searchable()
+                    ->label('Supervisor')
+                    ->helperText('Used for internal visitor approval routing (FR-002)'),
                 Forms\Components\Toggle::make('is_active')->default(true),
             ])->columns(2),
         ]);

@@ -19,6 +19,12 @@ Route::get('/kiosk', [QrCheckInController::class, 'scanPage'])->name('kiosk');
 Route::post('/api/qr/check-in', [QrCheckInController::class, 'checkIn'])->name('api.qr.checkin');
 Route::post('/api/qr/check-out', [QrCheckInController::class, 'checkOut'])->name('api.qr.checkout');
 
+// Screening questions API (FR-001)
+Route::get('/api/screening-questions', [QrCheckInController::class, 'screeningQuestions'])->name('api.screening');
+
+// Available escorts API (FR-008)
+Route::get('/api/escorts', [QrCheckInController::class, 'availableEscorts'])->name('api.escorts');
+
 // Visit document routes (protected by auth)
 Route::middleware('auth')->group(function () {
     Route::get('/visit/{visitRequest}/qr', [VisitDocumentController::class, 'qr'])->name('visit.qr');
