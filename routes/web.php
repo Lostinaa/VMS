@@ -16,6 +16,7 @@ Route::get('/group-visit', \App\Livewire\GroupVisitRequest::class)->name('visit.
 Route::get('/kiosk', [QrCheckInController::class, 'scanPage'])->name('kiosk');
 
 // QR check-in / check-out API (FR-005)
+Route::get('/api/qr/lookup', [QrCheckInController::class, 'lookupQr'])->name('api.qr.lookup');
 Route::post('/api/qr/check-in', [QrCheckInController::class, 'checkIn'])->name('api.qr.checkin');
 Route::post('/api/qr/check-out', [QrCheckInController::class, 'checkOut'])->name('api.qr.checkout');
 

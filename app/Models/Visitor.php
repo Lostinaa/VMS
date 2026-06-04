@@ -12,7 +12,7 @@ class Visitor extends Model
 
     protected $fillable = [
         'full_name', 'email', 'phone', 'organization',
-        'id_type', 'id_number', 'photo', 'car_plate_number',
+        'id_type', 'id_number', 'photo', 'car_plate_number', 'id_photo_path',
         'is_blacklisted', 'blacklist_reason',
         'is_whitelisted', 'whitelist_expires_at', 'whitelist_reason',
     ];

@@ -3,6 +3,7 @@
 namespace App\Notifications;
 
 use App\Models\VisitRequest;
+use App\Services\SmsService;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Notifications\Messages\MailMessage;
@@ -18,7 +19,13 @@ class VisitorCheckedInNotification extends Notification implements ShouldQueue
 
     public function via(object $notifiable): array
     {
-        return ['mail'];
+        $channels = ['mail'];
+
+        if (!empty($notifiable->phone)) {
+            $channels[] = 'sms';
+        }
+
+        return $channels;
     }
 
     public function toMail(object $notifiable): MailMessage
@@ -40,5 +47,20 @@ class VisitorCheckedInNotification extends Notification implements ShouldQueue
             )
             ->action('View Visit Details', url("/admin/visit-requests/{$visit->id}/edit"))
             ->line('Please be available to receive your visitor.');
+    }
+
+    /**
+     * FR-007: Send SMS notification when visitor checks in.
+     */
+    public function toSms(object $notifiable): void
+    {
+        $visit = $this->visitRequest;
+
+        $escort = $visit->zone?->escort_required ? ' ESCORT REQUIRED.' : '';
+
+        app(SmsService::class)->send(
+            $notifiable->phone,
+            "[Ethio Telecom VMS] {$visit->visitor->full_name} has checked in at {$visit->site->name}.{$escort} Please be available to receive your visitor."
+        );
     }
 }

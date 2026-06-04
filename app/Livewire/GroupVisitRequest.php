@@ -17,6 +17,7 @@ class GroupVisitRequest extends Component
     public ?int $host_id = null;
     public ?int $site_id = null;
     public ?int $zone_id = null;
+    public ?int $department_id = null;
     public string $purpose = '';
     public string $visitor_type = 'external';
     public string $category = 'general';
@@ -57,6 +58,7 @@ class GroupVisitRequest extends Component
             'host_id' => 'required|exists:users,id',
             'site_id' => 'required|exists:sites,id',
             'zone_id' => 'nullable|exists:zones,id',
+            'department_id' => 'nullable|exists:departments,id',
             'purpose' => 'required|string|max:500',
             'visitor_type' => 'required|in:external,internal',
             'category' => 'required|in:general,contractor,vendor,vip,job_applicant,other',
@@ -100,6 +102,13 @@ class GroupVisitRequest extends Component
             );
 
             if ($visitor->is_blacklisted) {
+                // Log a critical blacklist alert!
+                \App\Models\Alert::create([
+                    'type' => 'blacklist',
+                    'severity' => 'critical',
+                    'visitor_id' => $visitor->id,
+                    'message' => "Blacklisted visitor {$visitor->full_name} was included in group visit request attempt.",
+                ]);
                 continue; // Skip blacklisted visitors silently
             }
 
@@ -108,6 +117,7 @@ class GroupVisitRequest extends Component
                 'host_id' => $this->host_id,
                 'site_id' => $this->site_id,
                 'zone_id' => $this->zone_id,
+                'department_id' => $this->department_id,
                 'purpose' => $this->purpose,
                 'visitor_type' => $this->visitor_type,
                 'category' => $this->category,
@@ -139,7 +149,7 @@ class GroupVisitRequest extends Component
     public function resetForm(): void
     {
         $this->reset([
-            'host_id', 'site_id', 'zone_id', 'purpose',
+            'host_id', 'site_id', 'zone_id', 'department_id', 'purpose',
             'visitor_type', 'category', 'scheduled_at', 'notes',
             'submitted', 'groupId', 'createdCount',
         ]);
@@ -157,6 +167,7 @@ class GroupVisitRequest extends Component
         return view('livewire.group-visit-request', [
             'hosts' => User::where('role', 'host')->where('is_active', true)->pluck('name', 'id'),
             'sites' => Site::where('is_active', true)->pluck('name', 'id'),
+            'departments' => \App\Models\Department::where('is_active', true)->pluck('name', 'id'),
             'zones' => $zones,
         ])->layout('layouts.public');
     }

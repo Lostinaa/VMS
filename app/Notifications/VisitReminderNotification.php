@@ -3,6 +3,7 @@
 namespace App\Notifications;
 
 use App\Models\VisitRequest;
+use App\Services\SmsService;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Notifications\Messages\MailMessage;
@@ -19,7 +20,13 @@ class VisitReminderNotification extends Notification implements ShouldQueue
 
     public function via(object $notifiable): array
     {
-        return ['mail'];
+        $channels = ['mail'];
+
+        if (!empty($notifiable->phone)) {
+            $channels[] = 'sms';
+        }
+
+        return $channels;
     }
 
     public function toMail(object $notifiable): MailMessage
@@ -52,5 +59,22 @@ class VisitReminderNotification extends Notification implements ShouldQueue
             ->line('Please bring a valid government-issued ID for verification.')
             ->action('View Details', url('/visit-request'))
             ->line('We look forward to welcoming you.');
+    }
+
+    /**
+     * FR-007: Send SMS reminder for upcoming visit.
+     */
+    public function toSms(object $notifiable): void
+    {
+        $visit = $this->visitRequest;
+        $ref = 'VMS-' . str_pad($visit->id, 5, '0', STR_PAD_LEFT);
+
+        if ($this->recipientType === 'host') {
+            $message = "[Ethio Telecom VMS] Reminder: {$visit->visitor->full_name} visiting you tomorrow at {$visit->scheduled_at->format('H:i')}. Ref: {$ref}.";
+        } else {
+            $message = "[Ethio Telecom VMS] Reminder: Your visit {$ref} to {$visit->site->name} is scheduled for {$visit->scheduled_at->format('M d, Y H:i')}. Please bring a valid ID.";
+        }
+
+        app(SmsService::class)->send($notifiable->phone, $message);
     }
 }

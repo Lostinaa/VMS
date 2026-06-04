@@ -12,6 +12,7 @@ use Filament\Widgets\StatsOverviewWidget\Stat;
 class VmsStatsOverview extends BaseWidget
 {
     protected static ?int $sort = 1;
+    protected ?string $pollingInterval = '10s';
 
     protected function getStats(): array
     {

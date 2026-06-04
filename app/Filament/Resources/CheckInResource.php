@@ -25,6 +25,14 @@ class CheckInResource extends Resource
     {
         return $schema->schema([
             Schemas\Components\Section::make('Check-In Details')->schema([
+                Forms\Components\Toggle::make('is_walk_in')
+                    ->label('Walk-In Visitor (No Pre-Registration)')
+                    ->reactive()
+                    ->default(false)
+                    ->columnSpanFull()
+                    ->helperText('Enable this for visitors who arrive without a pre-registered visit request.'),
+
+                // Existing visit request selection — hidden for walk-ins
                 Forms\Components\Select::make('visit_request_id')
                     ->relationship(
                         'visitRequest',
@@ -34,7 +42,10 @@ class CheckInResource extends Resource
                     )->getOptionLabelFromRecordUsing(
                         fn($record) =>
                         "#{$record->id} - {$record->visitor->full_name} ({$record->purpose})"
-                    )->searchable()->preload()->required()->reactive()
+                    )->searchable()->preload()
+                    ->required(fn (Forms\Get $get) => !$get('is_walk_in'))
+                    ->visible(fn (Forms\Get $get) => !$get('is_walk_in'))
+                    ->reactive()
                     ->afterStateUpdated(fn($state, Schemas\Components\Utilities\Set $set) => $set(
                         'visitor_id',
                         \App\Models\VisitRequest::find($state)?->visitor_id
@@ -46,6 +57,81 @@ class CheckInResource extends Resource
                     ->required()->default(now())->native(false),
                 Forms\Components\DateTimePicker::make('checked_out_at')->native(false),
             ])->columns(2),
+
+            // Walk-in visitor details — only shown when is_walk_in is enabled
+            Schemas\Components\Section::make('Walk-In Visitor Details')
+                ->description('Enter the visitor\'s details for walk-in registration. The system will auto-create the visit request.')
+                ->visible(fn (Forms\Get $get) => $get('is_walk_in'))
+                ->schema([
+                    Forms\Components\TextInput::make('walkin_full_name')
+                        ->label('Full Name')
+                        ->required(fn (Forms\Get $get) => $get('is_walk_in'))
+                        ->maxLength(255),
+                    Forms\Components\TextInput::make('walkin_email')
+                        ->label('Email')->email()->maxLength(255),
+                    Forms\Components\TextInput::make('walkin_phone')
+                        ->label('Phone')->tel()->maxLength(20),
+                    Forms\Components\TextInput::make('walkin_organization')
+                        ->label('Organization')->maxLength(255),
+                    Forms\Components\Select::make('walkin_id_type')
+                        ->label('ID Type')
+                        ->options([
+                            'national_id' => 'National ID',
+                            'passport' => 'Passport',
+                            'driving_license' => 'Driving License',
+                            'employee_id' => 'Employee ID',
+                            'other' => 'Other',
+                        ]),
+                    Forms\Components\TextInput::make('walkin_id_number')
+                        ->label('ID Number')->maxLength(50),
+                ])->columns(2),
+
+            Schemas\Components\Section::make('Walk-In Visit Details')
+                ->description('Specify the visit details for this walk-in.')
+                ->visible(fn (Forms\Get $get) => $get('is_walk_in'))
+                ->schema([
+                    Forms\Components\Select::make('walkin_host_id')
+                        ->label('Host (Employee)')
+                        ->relationship('visitRequest.host', 'name', fn($query) => $query->where('is_active', true))
+                        ->searchable()->preload()
+                        ->required(fn (Forms\Get $get) => $get('is_walk_in')),
+                    Forms\Components\Select::make('walkin_site_id')
+                        ->label('Site')
+                        ->relationship('visitRequest.site', 'name')
+                        ->searchable()->preload()
+                        ->required(fn (Forms\Get $get) => $get('is_walk_in')),
+                    Forms\Components\Select::make('walkin_zone_id')
+                        ->label('Zone')
+                        ->relationship('visitRequest.zone', 'name')
+                        ->searchable()->preload(),
+                    Forms\Components\Select::make('walkin_department_id')
+                        ->label('Department / Destination Unit')
+                        ->relationship('visitRequest.department', 'name')
+                        ->searchable()->preload(),
+                    Forms\Components\TextInput::make('walkin_purpose')
+                        ->label('Purpose of Visit')
+                        ->required(fn (Forms\Get $get) => $get('is_walk_in'))
+                        ->maxLength(500),
+                    Forms\Components\Select::make('walkin_visitor_type')
+                        ->label('Visitor Type')
+                        ->options([
+                            'external' => 'External',
+                            'internal' => 'Internal',
+                        ])->default('external'),
+                    Forms\Components\Select::make('walkin_category')
+                        ->label('Category')
+                        ->options([
+                            'general' => 'General',
+                            'contractor' => 'Contractor',
+                            'government' => 'Government',
+                            'vip' => 'VIP',
+                            'delivery' => 'Delivery',
+                            'interview' => 'Interview',
+                        ])->default('general'),
+                    Forms\Components\TextInput::make('walkin_expected_duration')
+                        ->label('Expected Duration (hours)')
+                        ->numeric()->default(1),
+                ])->columns(2),
 
             Schemas\Components\Section::make('Verification')->schema([
                 Forms\Components\FileUpload::make('photo_path')
@@ -60,6 +146,16 @@ class CheckInResource extends Resource
                     ->helperText('Required for restricted zones'),
                 Forms\Components\Textarea::make('remarks')->rows(2)->columnSpanFull(),
             ])->columns(2),
+
+            Schemas\Components\Section::make('Documents')->schema([
+                Forms\Components\FileUpload::make('checkin_documents')
+                    ->label('Supporting Documents (NDA, ID Copy, etc.)')
+                    ->multiple()
+                    ->directory('checkins/documents')
+                    ->acceptedFileTypes(['application/pdf', 'image/jpeg', 'image/png', 'application/msword', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'])
+                    ->maxFiles(5)
+                    ->helperText('Upload NDA, ID scan, authorization letters, etc.'),
+            ]),
 
             Schemas\Components\Section::make('Badge')->schema([
                 Forms\Components\Select::make('badge_type')
@@ -111,6 +207,12 @@ class CheckInResource extends Resource
                         $record->visitRequest->update(['status' => 'checked_out']);
                         Notification::make()->title('Visitor checked out')->success()->send();
                     }),
+                \Filament\Actions\Action::make('print_badge')
+                    ->icon('heroicon-o-printer')
+                    ->color('info')
+                    ->url(fn ($record) => route('visit.badge', $record->visit_request_id))
+                    ->openUrlInNewTab()
+                    ->visible(fn ($record) => $record->visit_request_id),
                 \Filament\Actions\EditAction::make(),
             ])
             ->bulkActions([\Filament\Actions\BulkActionGroup::make([\Filament\Actions\DeleteBulkAction::make()])]);

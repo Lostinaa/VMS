@@ -68,6 +68,17 @@ class ScreeningQuestionResource extends Resource
                     ])
                     ->default('all')
                     ->required(),
+                Forms\Components\Select::make('category')
+                    ->options([
+                        'general' => 'General',
+                        'contractor' => 'Contractor',
+                        'government' => 'Government',
+                        'vip' => 'VIP',
+                        'delivery' => 'Delivery',
+                        'interview' => 'Interview',
+                    ])
+                    ->nullable()
+                    ->placeholder('All Categories'),
                 Forms\Components\Toggle::make('is_required')
                     ->label('Required')
                     ->default(true),
@@ -104,6 +115,7 @@ class ScreeningQuestionResource extends Resource
                         'vip' => 'primary',
                         default => 'gray',
                     }),
+                Tables\Columns\TextColumn::make('category')->badge()->placeholder('All'),
                 Tables\Columns\IconColumn::make('is_required')->boolean()->label('Required'),
                 Tables\Columns\IconColumn::make('is_active')->boolean()->label('Active'),
                 Tables\Columns\TextColumn::make('flag_answer')->label('Flags')->placeholder('—'),

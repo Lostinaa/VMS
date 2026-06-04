@@ -50,6 +50,16 @@
                         </select>
                     </div>
                     <div class="form-group">
+                        <label for="department_id">Department / Destination Unit</label>
+                        <select id="department_id" wire:model="department_id">
+                            <option value="">Select Department...</option>
+                            @foreach($departments as $id => $name)
+                                <option value="{{ $id }}">{{ $name }}</option>
+                            @endforeach
+                        </select>
+                        @error('department_id') <span class="field-error">{{ $message }}</span> @enderror
+                    </div>
+                    <div class="form-group">
                         <label for="purpose">Purpose *</label>
                         <input type="text" id="purpose" wire:model="purpose" placeholder="Purpose of group visit">
                         @error('purpose') <span class="field-error">{{ $message }}</span> @enderror

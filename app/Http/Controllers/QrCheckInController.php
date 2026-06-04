@@ -197,6 +197,7 @@ class QrCheckInController extends Controller
             'success' => true,
             'message' => 'Check-in successful.',
             'data' => [
+                'visit_request_id' => $visitRequest->id,
                 'visitor' => $visitRequest->visitor->full_name,
                 'organization' => $visitRequest->visitor->organization,
                 'host' => $visitRequest->host->name,
@@ -277,13 +278,53 @@ class QrCheckInController extends Controller
     }
 
     /**
+     * FR-005: Lookup a QR code to retrieve visit details before check-in.
+     * Used by the kiosk to determine visitor_type, category, zone, and escort requirements.
+     */
+    public function lookupQr(Request $request)
+    {
+        $qrCode = $request->input('qr_code');
+
+        if (!$qrCode) {
+            return response()->json(['success' => false, 'message' => 'QR code is required.'], 422);
+        }
+
+        $visitRequest = VisitRequest::where('qr_code', $qrCode)
+            ->with(['visitor', 'host', 'site', 'zone'])
+            ->first();
+
+        if (!$visitRequest) {
+            return response()->json(['success' => false, 'message' => 'Invalid QR code.'], 404);
+        }
+
+        return response()->json([
+            'success' => true,
+            'data' => [
+                'visit_id' => $visitRequest->id,
+                'status' => $visitRequest->status,
+                'visitor_name' => $visitRequest->visitor->full_name,
+                'visitor_type' => $visitRequest->visitor_type ?? 'external',
+                'category' => $visitRequest->category ?? 'general',
+                'host_name' => $visitRequest->host?->name,
+                'site_name' => $visitRequest->site?->name,
+                'zone_name' => $visitRequest->zone?->name,
+                'escort_required' => $visitRequest->zone?->escort_required ?? false,
+                'is_blacklisted' => $visitRequest->visitor->is_blacklisted ?? false,
+                'scheduled_at' => $visitRequest->scheduled_at?->format('M d, Y H:i'),
+            ],
+        ]);
+    }
+
+    /**
      * FR-001: Return active screening questions for a visitor type.
      * Called by kiosk JS to dynamically render the questionnaire.
+     * Supports filtering by visitor_type and category.
      */
     public function screeningQuestions(Request $request)
     {
         $type = $request->input('visitor_type', 'external');
-        $questions = ScreeningQuestion::forVisitorType($type);
+        $category = $request->input('category');
+        $questions = ScreeningQuestion::forVisitorType($type, $category);
 
         return response()->json([
             'success' => true,

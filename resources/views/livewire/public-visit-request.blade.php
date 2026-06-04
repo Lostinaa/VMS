@@ -105,6 +105,16 @@
                         </div>
                         @endif
                         <div class="form-group">
+                            <label for="department_id">Department / Destination Unit</label>
+                            <select id="department_id" wire:model="department_id">
+                                <option value="">— Select Department (Optional) —</option>
+                                @foreach($departments as $id => $name)
+                                    <option value="{{ $id }}">{{ $name }}</option>
+                                @endforeach
+                            </select>
+                            @error('department_id') <span class="field-error">{{ $message }}</span> @enderror
+                        </div>
+                        <div class="form-group">
                             <label for="visitor_type">Visitor Type *</label>
                             <select id="visitor_type" wire:model="visitor_type">
                                 <option value="external">External Visitor</option>

@@ -68,6 +68,10 @@ class VisitRequestResource extends Resource
                     ->relationship('zone', 'name', fn ($query, Schemas\Components\Utilities\Get $get) =>
                         $query->where('site_id', $get('site_id'))
                     )->searchable()->preload(),
+                Forms\Components\Select::make('department_id')
+                    ->relationship('department', 'name')
+                    ->label('Department / Destination Unit')
+                    ->searchable()->preload(),
                 Forms\Components\TextInput::make('meeting_location')
                     ->label('Meeting Room / Location')
                     ->placeholder('e.g. Conference Room 3A')
@@ -129,6 +133,7 @@ class VisitRequestResource extends Resource
                 Tables\Columns\TextColumn::make('visitor.full_name')->label('Visitor')->searchable()->sortable(),
                 Tables\Columns\TextColumn::make('host.name')->label('Host')->searchable()->sortable(),
                 Tables\Columns\TextColumn::make('site.name')->label('Site')->sortable(),
+                Tables\Columns\TextColumn::make('department.name')->label('Department / Unit')->placeholder('—')->sortable(),
                 Tables\Columns\TextColumn::make('purpose')->limit(30)->tooltip(fn ($record) => $record->purpose),
                 Tables\Columns\TextColumn::make('category')->badge(),
                 Tables\Columns\TextColumn::make('status')->badge()

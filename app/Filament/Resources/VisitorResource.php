@@ -48,6 +48,11 @@ class VisitorResource extends Resource
                     ->imageCropAspectRatio('1:1')
                     ->imageResizeTargetWidth('300')
                     ->imageResizeTargetHeight('300'),
+                Forms\Components\FileUpload::make('id_photo_path')
+                    ->label('Government ID Scan')
+                    ->image()
+                    ->directory('visitors/ids')
+                    ->helperText('Upload a scan or picture of the visitor\'s ID.'),
             ])->columns(2),
 
             Schemas\Components\Section::make('Status')->schema([

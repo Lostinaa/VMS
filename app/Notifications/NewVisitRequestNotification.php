@@ -3,6 +3,7 @@
 namespace App\Notifications;
 
 use App\Models\VisitRequest;
+use App\Services\SmsService;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Notifications\Messages\MailMessage;
@@ -18,7 +19,14 @@ class NewVisitRequestNotification extends Notification implements ShouldQueue
 
     public function via(object $notifiable): array
     {
-        return ['mail'];
+        $channels = ['mail'];
+
+        // FR-007: SMS channel when phone number is available
+        if (!empty($notifiable->phone)) {
+            $channels[] = 'sms';
+        }
+
+        return $channels;
     }
 
     public function toMail(object $notifiable): MailMessage
@@ -36,5 +44,19 @@ class NewVisitRequestNotification extends Notification implements ShouldQueue
             ->line("**Category:** " . ucfirst(str_replace('_', ' ', $visit->category)))
             ->action('Review Request', url("/admin/visit-requests"))
             ->line('Please approve or reject this request at your earliest convenience.');
+    }
+
+    /**
+     * FR-007: Send SMS notification for new visit request.
+     */
+    public function toSms(object $notifiable): void
+    {
+        $visit = $this->visitRequest;
+        $ref = 'VMS-' . str_pad($visit->id, 5, '0', STR_PAD_LEFT);
+
+        app(SmsService::class)->send(
+            $notifiable->phone,
+            "[Ethio Telecom VMS] New visit request {$ref} from {$visit->visitor->full_name} ({$visit->visitor->organization}). Purpose: {$visit->purpose}. Please review."
+        );
     }
 }

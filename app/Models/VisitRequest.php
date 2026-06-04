@@ -10,7 +10,7 @@ use Illuminate\Database\Eloquent\Relations\HasOne;
 class VisitRequest extends Model
 {
     protected $fillable = [
-        'visitor_id', 'host_id', 'site_id', 'zone_id', 'meeting_location',
+        'visitor_id', 'host_id', 'site_id', 'zone_id', 'department_id', 'meeting_location',
         'purpose', 'visitor_type', 'category', 'status', 'scheduled_at',
         'expected_duration_hours', 'expires_at', 'group_id', 'notes',
         'qr_code', 'parking_number',
@@ -34,6 +34,11 @@ class VisitRequest extends Model
     public function site(): BelongsTo
     {
         return $this->belongsTo(Site::class);
+    }
+
+    public function department(): BelongsTo
+    {
+        return $this->belongsTo(Department::class);
     }
 
     public function zone(): BelongsTo

@@ -357,9 +357,50 @@
         async function startCheckIn() {
             currentQr = document.getElementById('qrInput').value.trim();
             if (!currentQr) return;
+
+            // FR-005: First lookup the QR to get visit details (visitor_type, category, zone)
+            try {
+                const lookupRes = await fetch(`/api/qr/lookup?qr_code=${encodeURIComponent(currentQr)}`);
+                const lookupJson = await lookupRes.json();
+
+                if (!lookupJson.success) {
+                    showResult(false, lookupJson.message || 'Invalid QR code.');
+                    return;
+                }
+
+                visitData = lookupJson.data;
+
+                // Early validation
+                if (visitData.is_blacklisted) {
+                    showResult(false, 'Check-in denied. Please contact security.');
+                    return;
+                }
+
+                if (visitData.status !== 'approved') {
+                    showResult(false, `Visit request is '${visitData.status}'. Only approved requests can be checked in.`);
+                    return;
+                }
+
+            } catch (e) {
+                console.warn('QR lookup error', e);
+                showResult(false, 'Connection error. Please try again.');
+                return;
+            }
+
             speak(currentLang === 'am' ? 'እባክዎ ጥያቄዎችን ይመልሱ' : 'Please answer the screening questions.');
             showStep(2);
             await loadScreeningQuestions();
+        }
+
+        function showResult(success, message, details = '') {
+            const resultDiv = document.getElementById('result');
+            const resultTitle = document.getElementById('resultTitle');
+            const resultDetails = document.getElementById('resultDetails');
+            resultDiv.style.display = 'block';
+            resultDiv.className = success ? 'result success' : 'result error';
+            resultTitle.textContent = (success ? '✅ ' : '❌ ') + message;
+            resultDetails.innerHTML = details;
+            setTimeout(() => { resultDiv.style.display = 'none'; }, 10000);
         }
 
         async function doCheckOut() {
@@ -371,7 +412,13 @@
         // --- Step 2: Screening (FR-001) ---
         async function loadScreeningQuestions() {
             try {
-                const res = await fetch('/api/screening-questions?visitor_type=external');
+                // Use actual visitor_type and category from QR lookup instead of hardcoded 'external'
+                const visitorType = visitData ? (visitData.visitor_type || 'external') : 'external';
+                const category = visitData ? (visitData.category || '') : '';
+                let url = `/api/screening-questions?visitor_type=${encodeURIComponent(visitorType)}`;
+                if (category) url += `&category=${encodeURIComponent(category)}`;
+
+                const res = await fetch(url);
                 const json = await res.json();
                 const container = document.getElementById('screeningQuestions');
                 container.innerHTML = '';
@@ -427,22 +474,25 @@
 
         // --- Step 3: Escort (FR-008) ---
         async function goToEscortOrPhoto() {
-            // Check if escort is required by attempting a dry check-in
-            // For now, show escort step and let user skip if not needed
-            try {
-                const res = await fetch('/api/escorts');
-                const json = await res.json();
-                if (json.data && json.data.length > 0) {
-                    const sel = document.getElementById('escortSelect');
-                    sel.innerHTML = '<option value="">-- Select Escort --</option>';
-                    json.data.forEach(e => {
-                        sel.innerHTML += `<option value="${e.id}">${e.name} (${e.role})</option>`;
-                    });
-                    speak(currentLang === 'am' ? 'እባክዎ አጃቢዎን ይምረጡ' : 'Please select your escort if required.');
-                    showStep(3);
-                    return;
-                }
-            } catch (e) { console.warn('Escorts fetch error', e); }
+            // Only show escort step if the zone actually requires escort
+            const escortRequired = visitData && visitData.escort_required;
+
+            if (escortRequired) {
+                try {
+                    const res = await fetch('/api/escorts');
+                    const json = await res.json();
+                    if (json.data && json.data.length > 0) {
+                        const sel = document.getElementById('escortSelect');
+                        sel.innerHTML = '<option value="">-- Select Escort --</option>';
+                        json.data.forEach(e => {
+                            sel.innerHTML += `<option value="${e.id}">${e.name} (${e.role})</option>`;
+                        });
+                        speak(currentLang === 'am' ? 'እባክዎ አጃቢዎን ይምረጡ' : 'Please select your escort.');
+                        showStep(3);
+                        return;
+                    }
+                } catch (e) { console.warn('Escorts fetch error', e); }
+            }
             goToPhoto();
         }
 
@@ -554,6 +604,7 @@
             document.getElementById('qrInput').focus();
             capturedPhoto = null; capturedSignature = null;
             selectedEscortId = null; window._screeningResponses = [];
+            visitData = null;
             speak(currentLang === 'am' ? 'ግቢ ተጠናቅቋል' : 'Check-in complete. Thank you.');
         }
 
@@ -591,6 +642,9 @@
                         if (d.checked_out_at) html += `<strong>Time:</strong> ${d.checked_out_at}<br>`;
                         if (d.duration) html += `<strong>Duration:</strong> ${d.duration}<br>`;
                         if (d.escort_required) html += '<div class="escort-warning">⚠️ Escort Required — Please wait for your host.</div>';
+                        if (d.visit_request_id) {
+                            html += `<a href="/visit/${d.visit_request_id}/badge" target="_blank" class="btn btn-checkin" style="display:inline-block; text-decoration:none; text-align:center; margin-top:0.75rem; width:100%;">🖨️ Print Badge</a>`;
+                        }
                     }
                     resultDetails.innerHTML = html;
                 } else {
