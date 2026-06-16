@@ -5,7 +5,7 @@ COPY . .
 RUN npm ci && npm run build
 
 # Stage 2: Build PHP environment
-FROM php:8.3-fpm-alpine
+FROM php:8.4-fpm-alpine
 
 # Set working directory
 WORKDIR /var/www
