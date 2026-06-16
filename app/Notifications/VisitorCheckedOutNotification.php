@@ -10,7 +10,7 @@ use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Notifications\Messages\MailMessage;
 use Illuminate\Notifications\Notification;
 
-class VisitorCheckedInNotification extends Notification implements ShouldQueue
+class VisitorCheckedOutNotification extends Notification implements ShouldQueue
 {
     use Queueable;
 
@@ -34,34 +34,25 @@ class VisitorCheckedInNotification extends Notification implements ShouldQueue
         $visit = $this->visitRequest;
 
         return (new MailMessage)
-            ->subject("Visitor Arrived — {$visit->visitor->full_name}")
+            ->subject("Visitor Checked Out — {$visit->visitor->full_name}")
             ->greeting("Hello {$visit->host->name},")
-            ->line("Your visitor **{$visit->visitor->full_name}** has checked in.")
-            ->line("**Organization:** {$visit->visitor->organization}")
-            ->line("**Purpose:** {$visit->purpose}")
+            ->line("Your visitor **{$visit->visitor->full_name}** from **{$visit->visitor->organization}** has checked out.")
             ->line("**Site:** {$visit->site->name}")
-            ->when($visit->zone, fn ($mail) => $mail->line("**Zone:** {$visit->zone->name}"))
-            ->line("**Checked in at:** " . now()->format('M d, Y \\a\\t H:i'))
-            ->when(
-                $visit->zone?->escort_required,
-                fn ($mail) => $mail->line('⚠️ **Escort is required** for this zone. Please meet your visitor at the reception.')
-            )
+            ->line("**Checked out at:** " . now()->format('M d, Y \\a\\t H:i'))
             ->action('View Visit Details', url("/admin/visit-requests/{$visit->id}/edit"))
-            ->line('Please be available to receive your visitor.');
+            ->line('Thank you for using Ethio Telecom VMS.');
     }
 
     /**
-     * FR-007: Send SMS notification when visitor checks in.
+     * FR-007: Send SMS notification when visitor checks out.
      */
     public function toSms(object $notifiable): void
     {
         $visit = $this->visitRequest;
 
-        $escort = $visit->zone?->escort_required ? ' ESCORT REQUIRED.' : '';
-
         app(SmsService::class)->send(
             $notifiable->phone,
-            "[Ethio Telecom VMS] {$visit->visitor->full_name} has checked in at {$visit->site->name}.{$escort} Please be available to receive your visitor."
+            "[Ethio Telecom VMS] Visitor {$visit->visitor->full_name} has checked out from {$visit->site->name} at " . now()->format('H:i') . "."
         );
     }
 }

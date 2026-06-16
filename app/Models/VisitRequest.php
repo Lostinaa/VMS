@@ -6,6 +6,8 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\HasOne;
+use App\Notifications\VisitApprovedNotification;
+use App\Notifications\VisitRejectedNotification;
 
 class VisitRequest extends Model
 {
@@ -20,6 +22,65 @@ class VisitRequest extends Model
         'scheduled_at' => 'datetime',
         'expires_at' => 'datetime',
     ];
+
+    protected static function booted(): void
+    {
+        static::updated(function (VisitRequest $visitRequest) {
+            if ($visitRequest->wasChanged('status')) {
+                $status = $visitRequest->status;
+
+                if ($status === 'approved') {
+                    // 1. Generate QR code if empty
+                    if (empty($visitRequest->qr_code)) {
+                        $qr = 'VMS-QR-' . str_pad($visitRequest->id, 6, '0', STR_PAD_LEFT) . '-' . \Illuminate\Support\Str::random(8);
+                        $visitRequest->qr_code = $qr;
+                        $visitRequest->saveQuietly();
+                    }
+
+                    // 2. Create VisitApproval if not exists
+                    if (!$visitRequest->approvals()->where('action', 'approved')->exists()) {
+                        VisitApproval::create([
+                            'visit_request_id' => $visitRequest->id,
+                            'approver_id' => auth()->id() ?: 1,
+                            'action' => 'approved',
+                            'acted_at' => now(),
+                        ]);
+                    }
+
+                    // 3. Send notification to visitor
+                    $visitRequest->load(['visitor', 'host', 'site', 'zone']);
+                    if ($visitRequest->visitor) {
+                        $visitRequest->visitor->notify(new VisitApprovedNotification($visitRequest));
+                    }
+                } elseif ($status === 'rejected') {
+                    // 1. Fetch remarks from the most recent rejected approval if exists
+                    $existingApproval = $visitRequest->approvals()
+                        ->where('action', 'rejected')
+                        ->latest()
+                        ->first();
+
+                    $remarks = $existingApproval ? $existingApproval->remarks : ($visitRequest->notes ?: 'Rejected');
+
+                    // 2. Create VisitApproval if not exists
+                    if (!$existingApproval) {
+                        $existingApproval = VisitApproval::create([
+                            'visit_request_id' => $visitRequest->id,
+                            'approver_id' => auth()->id() ?: 1,
+                            'action' => 'rejected',
+                            'remarks' => $remarks,
+                            'acted_at' => now(),
+                        ]);
+                    }
+
+                    // 3. Send notification to visitor
+                    $visitRequest->load(['visitor', 'host', 'site', 'zone']);
+                    if ($visitRequest->visitor) {
+                        $visitRequest->visitor->notify(new VisitRejectedNotification($visitRequest, $remarks));
+                    }
+                }
+            }
+        });
+    }
 
     public function visitor(): BelongsTo
     {
@@ -61,3 +122,4 @@ class VisitRequest extends Model
         return $this->hasMany(Alert::class);
     }
 }
+

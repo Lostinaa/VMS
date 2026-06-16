@@ -24,6 +24,13 @@ class QrCheckInController extends Controller
     {
         $qrCode = $request->input('qr_code');
 
+        if ($qrCode && str_starts_with($qrCode, '{') && str_ends_with($qrCode, '}')) {
+            $decoded = json_decode($qrCode, true);
+            if (isset($decoded['qr'])) {
+                $qrCode = $decoded['qr'];
+            }
+        }
+
         if (!$qrCode) {
             return response()->json(['success' => false, 'message' => 'QR code is required.'], 422);
         }
@@ -219,6 +226,13 @@ class QrCheckInController extends Controller
     {
         $qrCode = $request->input('qr_code');
 
+        if ($qrCode && str_starts_with($qrCode, '{') && str_ends_with($qrCode, '}')) {
+            $decoded = json_decode($qrCode, true);
+            if (isset($decoded['qr'])) {
+                $qrCode = $decoded['qr'];
+            }
+        }
+
         if (!$qrCode) {
             return response()->json(['success' => false, 'message' => 'QR code is required.'], 422);
         }
@@ -243,6 +257,11 @@ class QrCheckInController extends Controller
         }
 
         $visitRequest->update(['status' => 'checked_out']);
+
+        // Notify host (FR-007)
+        if ($visitRequest->host) {
+            $visitRequest->host->notify(new \App\Notifications\VisitorCheckedOutNotification($visitRequest));
+        }
 
         // Create exit log (FR-010)
         if ($checkIn && $visitRequest->zone_id) {
@@ -284,6 +303,13 @@ class QrCheckInController extends Controller
     public function lookupQr(Request $request)
     {
         $qrCode = $request->input('qr_code');
+
+        if ($qrCode && str_starts_with($qrCode, '{') && str_ends_with($qrCode, '}')) {
+            $decoded = json_decode($qrCode, true);
+            if (isset($decoded['qr'])) {
+                $qrCode = $decoded['qr'];
+            }
+        }
 
         if (!$qrCode) {
             return response()->json(['success' => false, 'message' => 'QR code is required.'], 422);

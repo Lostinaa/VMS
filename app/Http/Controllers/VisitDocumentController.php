@@ -12,16 +12,19 @@ class VisitDocumentController extends Controller
     {
         $visitRequest->load(['visitor', 'host', 'site', 'zone']);
 
-        $qrData = json_encode([
-            'id' => $visitRequest->id,
-            'visitor' => $visitRequest->visitor->full_name,
-            'host' => $visitRequest->host->name,
-            'site' => $visitRequest->site->name,
-            'purpose' => $visitRequest->purpose,
-            'qr' => $visitRequest->qr_code,
-        ]);
+        // Standardize: QR code encodes raw qr_code string to ensure kiosk scanning consistency
+        $qrSvg = QrCode::format('svg')->size(300)->generate($visitRequest->qr_code);
 
-        $qrSvg = QrCode::format('svg')->size(300)->generate($qrData);
+        return view('visits.qr', compact('visitRequest', 'qrSvg'));
+    }
+
+    public function publicQr(string $qrCode)
+    {
+        $visitRequest = VisitRequest::where('qr_code', $qrCode)
+            ->with(['visitor', 'host', 'site', 'zone'])
+            ->firstOrFail();
+
+        $qrSvg = QrCode::format('svg')->size(300)->generate($visitRequest->qr_code);
 
         return view('visits.qr', compact('visitRequest', 'qrSvg'));
     }

@@ -31,3 +31,7 @@ Route::middleware('auth')->group(function () {
     Route::get('/visit/{visitRequest}/qr', [VisitDocumentController::class, 'qr'])->name('visit.qr');
     Route::get('/visit/{visitRequest}/badge', [VisitDocumentController::class, 'badge'])->name('visit.badge');
 });
+
+// Public QR code access (FR-005)
+Route::get('/visit/qr/{qr_code}', [VisitDocumentController::class, 'publicQr'])->name('visit.qr.public');
+

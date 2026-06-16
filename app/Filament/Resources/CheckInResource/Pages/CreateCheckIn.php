@@ -85,11 +85,6 @@ class CreateCheckIn extends CreateRecord
             // Set visitor_id and visit_request_id for CheckIn creation
             $data['visitor_id'] = $visitor->id;
             $data['visit_request_id'] = $visitRequest->id;
-
-            // Extract checkin documents for afterCreate
-            if (!empty($data['checkin_documents'])) {
-                $this->walkinDocuments = is_array($data['checkin_documents']) ? $data['checkin_documents'] : [$data['checkin_documents']];
-            }
         } else {
             if (isset($data['visit_request_id'])) {
                 $vr = VisitRequest::find($data['visit_request_id']);
@@ -98,6 +93,11 @@ class CreateCheckIn extends CreateRecord
                     $vr->update(['status' => 'checked_in']);
                 }
             }
+        }
+
+        // Extract checkin documents for afterCreate (both walk-in and pre-registered)
+        if (!empty($data['checkin_documents'])) {
+            $this->walkinDocuments = is_array($data['checkin_documents']) ? $data['checkin_documents'] : [$data['checkin_documents']];
         }
 
         // Remove all walk-in keys and form fields that are not in the CheckIn table schema

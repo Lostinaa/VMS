@@ -8,8 +8,13 @@
                         <path stroke-linecap="round" stroke-linejoin="round" d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
                     </svg>
                 </div>
-                <h2>Visit Request Submitted!</h2>
-                <p>Your request has been received and is pending approval.<br>You will be notified once it has been reviewed.</p>
+                @if($autoApproved)
+                    <h2>Visit Request Approved!</h2>
+                    <p>Your visit has been automatically approved!<br>Your QR code has been sent to your email and phone.</p>
+                @else
+                    <h2>Visit Request Submitted!</h2>
+                    <p>Your request has been received and is pending approval.<br>You will be notified once it has been reviewed.</p>
+                @endif
                 <div class="ref-code">{{ $referenceCode }}</div>
                 <p style="font-size: 0.8rem; color: #64748b;">Save this reference code for your records.</p>
                 <button wire:click="resetForm" class="btn-new">Submit Another Request</button>

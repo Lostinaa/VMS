@@ -167,21 +167,7 @@ class VisitRequestResource extends Resource
                         ->requiresConfirmation()
                         ->visible(fn ($record) => $record->status === 'pending')
                         ->action(function ($record) {
-                            $qr = 'VMS-VR-' . $record->id . '-' . now()->timestamp;
-                            $record->update(['status' => 'approved', 'qr_code' => $qr]);
-                            VisitApproval::create([
-                                'visit_request_id' => $record->id,
-                                'approver_id' => auth()->id(),
-                                'action' => 'approved',
-                                'acted_at' => now(),
-                            ]);
-
-                            // Send email notification to visitor (FR-007)
-                            $record->load(['visitor', 'host', 'site', 'zone']);
-                            if ($record->visitor->email) {
-                                $record->visitor->notify(new VisitApprovedNotification($record));
-                            }
-
+                            $record->update(['status' => 'approved']);
                             Notification::make()->title('Visit Approved — QR generated & notification sent')->success()->send();
                         }),
                     \Filament\Actions\Action::make('reject')
@@ -193,7 +179,7 @@ class VisitRequestResource extends Resource
                         ])
                         ->visible(fn ($record) => $record->status === 'pending')
                         ->action(function ($record, array $data) {
-                            $record->update(['status' => 'rejected']);
+                            // Create the approval first so model event can read it and use the custom remarks!
                             VisitApproval::create([
                                 'visit_request_id' => $record->id,
                                 'approver_id' => auth()->id(),
@@ -202,12 +188,7 @@ class VisitRequestResource extends Resource
                                 'acted_at' => now(),
                             ]);
 
-                            // Send email notification to visitor (FR-007)
-                            $record->load(['visitor', 'host', 'site', 'zone']);
-                            if ($record->visitor->email) {
-                                $record->visitor->notify(new VisitRejectedNotification($record, $data['remarks']));
-                            }
-
+                            $record->update(['status' => 'rejected']);
                             Notification::make()->title('Visit Rejected — notification sent')->danger()->send();
                         }),
                 ]),

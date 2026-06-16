@@ -2,6 +2,7 @@
 
 namespace App\Notifications;
 
+use App\Channels\SmsChannel;
 use App\Models\VisitRequest;
 use App\Services\SmsService;
 use Illuminate\Bus\Queueable;
@@ -23,7 +24,7 @@ class NewVisitRequestNotification extends Notification implements ShouldQueue
 
         // FR-007: SMS channel when phone number is available
         if (!empty($notifiable->phone)) {
-            $channels[] = 'sms';
+            $channels[] = SmsChannel::class;
         }
 
         return $channels;

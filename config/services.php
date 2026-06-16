@@ -35,4 +35,10 @@ return [
         ],
     ],
 
+    'sms' => [
+        'enabled' => env('SMS_ENABLED', false),
+        'url' => env('SMS_GATEWAY_URL', 'https://smsgw.ethiotelecom.et/bl/index.php'),
+    ],
+
 ];
+

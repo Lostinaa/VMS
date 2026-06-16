@@ -204,7 +204,13 @@ class CheckInResource extends Resource
                             'checked_out_at' => now(),
                             'checked_out_by' => auth()->id(),
                         ]);
-                        $record->visitRequest->update(['status' => 'checked_out']);
+                        $visitRequest = $record->visitRequest;
+                        if ($visitRequest) {
+                            $visitRequest->update(['status' => 'checked_out']);
+                            if ($visitRequest->host) {
+                                $visitRequest->host->notify(new \App\Notifications\VisitorCheckedOutNotification($visitRequest));
+                            }
+                        }
                         Notification::make()->title('Visitor checked out')->success()->send();
                     }),
                 \Filament\Actions\Action::make('print_badge')

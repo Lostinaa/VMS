@@ -35,6 +35,7 @@ class PublicVisitRequest extends Component
     // State
     public bool $submitted = false;
     public ?string $referenceCode = null;
+    public bool $autoApproved = false;
 
     protected function rules(): array
     {
@@ -184,6 +185,7 @@ class PublicVisitRequest extends Component
 
         $this->referenceCode = 'VMS-' . str_pad($visit->id, 5, '0', STR_PAD_LEFT);
         $this->submitted = true;
+        $this->autoApproved = $autoApprove;
 
         // Notify host about the new visit request (FR-007)
         $host = User::find($this->host_id);
@@ -200,7 +202,7 @@ class PublicVisitRequest extends Component
             'id_type', 'id_number', 'car_plate_number',
             'host_id', 'site_id', 'zone_id', 'department_id', 'purpose',
             'visitor_type', 'category', 'scheduled_at', 'notes',
-            'submitted', 'referenceCode',
+            'submitted', 'referenceCode', 'autoApproved',
         ]);
         $this->id_type = 'national_id';
         $this->visitor_type = 'external';
@@ -212,7 +214,7 @@ class PublicVisitRequest extends Component
         return view('livewire.public-visit-request', [
             'hosts' => User::where('role', 'host')->where('is_active', true)->pluck('name', 'id'),
             'sites' => Site::where('is_active', true)->pluck('name', 'id'),
-            'departments' => \App\Models\Department::where('is_active', true)->pluck('name', 'id'),
+            'departments' => \App\Models\Department::pluck('name', 'id'),
         ])->layout('layouts.public');
     }
 }

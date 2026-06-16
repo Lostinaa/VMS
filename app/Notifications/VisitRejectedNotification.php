@@ -2,6 +2,7 @@
 
 namespace App\Notifications;
 
+use App\Channels\SmsChannel;
 use App\Models\VisitRequest;
 use App\Services\SmsService;
 use Illuminate\Bus\Queueable;
@@ -23,7 +24,7 @@ class VisitRejectedNotification extends Notification implements ShouldQueue
         $channels = ['mail'];
 
         if (!empty($notifiable->phone)) {
-            $channels[] = 'sms';
+            $channels[] = SmsChannel::class;
         }
 
         return $channels;

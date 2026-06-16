@@ -158,6 +158,8 @@
 
         .footer { position: fixed; bottom: 0.75rem; font-size: 0.65rem; color: #475569; z-index: 1; }
     </style>
+    <!-- HTML5 QR Code Scanner Library (FR-005) -->
+    <script src="https://unpkg.com/html5-qrcode" type="text/javascript"></script>
 </head>
 <body>
     <div class="bg-pattern"></div>
@@ -189,6 +191,13 @@
         <div class="card step active" id="step1">
             <h2 data-i18n="scan_title">📱 Scan Your QR Code</h2>
             <p class="subtitle" data-i18n="scan_subtitle">Scan or enter your QR code below to check in or check out.</p>
+
+            <!-- Web Camera QR Reader -->
+            <div id="qr-reader" style="width: 100%; max-width: 400px; margin: 0 auto 1.25rem auto; display: none; border-radius: 14px; overflow: hidden; border: 2px solid var(--et-green); aspect-ratio: 1/1; position: relative;"></div>
+            <button id="toggleCameraScannerBtn" class="btn btn-secondary" onclick="toggleCameraScanner()" style="margin-bottom: 1.25rem; width: 100%; display: flex; align-items: center; justify-content: center; gap: 0.5rem;">
+                <span>📷</span> <span id="cameraScannerText" data-i18n="scan_with_camera">Scan with Camera</span>
+            </button>
+
             <input type="text" id="qrInput" class="scan-input" data-i18n-placeholder="scan_placeholder" placeholder="Scan QR code here…" autofocus autocomplete="off">
             <div class="btn-group">
                 <button class="btn btn-checkin" onclick="startCheckIn()" id="btnCheckIn" data-i18n="check_in">✓ Check In</button>
@@ -249,7 +258,34 @@
         <!-- Step 5: Signature + Document Upload (FR-005) -->
         <div class="card step" id="step5">
             <h2 data-i18n="sig_title">✍️ Digital Signature</h2>
-            <p class="subtitle" data-i18n="sig_subtitle">Please sign below to acknowledge the visitor terms and safety guidelines.</p>
+            <p class="subtitle" data-i18n="sig_subtitle">Please review terms and sign below to complete check-in.</p>
+            
+            <!-- Safety Briefing (FR-005) -->
+            <div style="margin: 1rem 0; text-align: left; background: var(--et-input-bg); border: 1px solid var(--et-border); border-radius: 12px; padding: 1rem; max-height: 120px; overflow-y: scroll; font-size: 0.8rem; line-height: 1.5; color: var(--et-muted);">
+                <strong style="color: var(--et-text-heading); display: block; margin-bottom: 0.5rem;" data-i18n="terms_header">Visitor Terms & Safety Briefing</strong>
+                <p id="termsTextEn" style="display: block;">
+                    1. <strong>Badge Visibility:</strong> Wear your visitor badge visibly at all times.<br>
+                    2. <strong>Escort Policy:</strong> Restricted zones require accompaniment by an authorized escort.<br>
+                    3. <strong>Prohibited Actions:</strong> Unauthorized photography, recording, and network connections are prohibited.<br>
+                    4. <strong>Emergency Protocols:</strong> Follow exit signs and security instructions in an emergency.<br>
+                    5. <strong>Data Consent:</strong> You consent to security tracking of your visit and photo scan.
+                </p>
+                <p id="termsTextAm" style="display: none;">
+                    1. <strong>ባጅ መልበስ:</strong> የጎብኚ ባጅዎን ሁልጊዜ በግልጽ በሚታይ ሁኔታ መልበስ አለብዎት።<br>
+                    2. <strong>አጃቢ ፖሊሲ:</strong> የተከለከሉ ቦታዎች በተፈቀደለት ሰራተኛ አጃቢነት መጎብኘት አለባቸው።<br>
+                    3. <strong>የተከለከሉ ተግባራት:</strong> ያልተፈቀደ ፎቶ ማንሳት፣ መቅረጽ እና የአውታረ መረብ ግንኙነቶች የተከለከሉ ናቸው።<br>
+                    4. <strong>የድንገተኛ አደጋ ፕሮቶኮሎች:</strong> በድንገተኛ ሁኔታዎች ውስጥ የደህንነት ሰራተኞችን መመሪያዎች ይከተሉ።<br>
+                    5. <strong>የውሂብ ስምምነት:</strong> ለደህንነት ክትትል የጉብኝትዎን ዝርዝሮች እና ፎቶ ለመሰብሰብ ተስማምተዋል።
+                </p>
+            </div>
+
+            <div style="margin: 0.75rem 0; text-align: left; display: flex; align-items: flex-start; gap: 0.5rem;">
+                <input type="checkbox" id="termsAgree" style="margin-top: 0.2rem; cursor: pointer;">
+                <label for="termsAgree" style="font-size: 0.8rem; color: var(--et-text); cursor: pointer;" data-i18n="sig_agree">
+                    I have read and agree to the visitor terms and safety guidelines.
+                </label>
+            </div>
+
             <canvas id="sigCanvas" class="sig-canvas"></canvas>
             <p class="sig-label" data-i18n="sig_hint">Draw your signature with mouse or finger</p>
             <div style="margin-top:1rem; text-align:left;">
@@ -285,11 +321,16 @@
                 photo_subtitle: 'Please look at the camera and take your photo for the visitor badge.',
                 take_photo: '📸 Take Photo', retake: '↻ Retake', continue: 'Continue →', skip: 'Skip',
                 sig_title: '✍️ Digital Signature',
-                sig_subtitle: 'Please sign below to acknowledge the visitor terms and safety guidelines.',
+                sig_subtitle: 'Please review terms and sign below to complete check-in.',
+                terms_header: 'Visitor Terms & Safety Briefing',
+                sig_agree: 'I have read and agree to the visitor terms and safety guidelines.',
+                terms_required: 'Please read and agree to the visitor terms and safety guidelines.',
                 sig_hint: 'Draw your signature with mouse or finger', clear: 'Clear',
                 complete_checkin: '✓ Complete Check-In',
                 doc_label: '📎 Upload supporting documents (optional):',
                 voice_on: '🔊', voice_off: '🔇',
+                scan_with_camera: 'Scan with Camera',
+                stop_camera: 'Stop Camera Scanner',
             },
             am: {
                 kiosk_title: 'የራስ አገልግሎት ኪዮስክ', scan_title: '📱 የQR ኮድ ይቃኙ',
@@ -306,10 +347,15 @@
                 take_photo: '📸 ፎቶ ያንሱ', retake: '↻ እንደገና ያንሱ', continue: 'ቀጥል →', skip: 'ዝለል',
                 sig_title: '✍️ ዲጂታል ፊርማ',
                 sig_subtitle: 'እባክዎ የጎብኚ ደንቦችን እና የደህንነት መመሪያዎችን ለማረጋገጥ ከዚህ ይፈርሙ።',
+                terms_header: 'የጎብኚዎች ውል እና የደህንነት መግለጫ',
+                sig_agree: 'የጎብኚዎችን ውል እና የደህንነት መመሪያዎችን አንብቤያለሁ፣ እስማማለሁም።',
+                terms_required: 'እባክዎ የጎብኚዎችን ውል እና የደህንነት መመሪያዎችን መስማማትዎን ያረጋግጡ።',
                 sig_hint: 'ፊርማዎን በማውስ ወይም በጣት ይሳሉ', clear: 'ያጽዱ',
                 complete_checkin: '✓ ግቢን ያጠናቅቁ',
                 doc_label: '📎 ሰነዶችን ያስገቡ (አማራጭ):',
                 voice_on: '🔊', voice_off: '🔇',
+                scan_with_camera: 'በካሜራ ይቃኙ',
+                stop_camera: 'ካሜራውን ያቁሙ',
             }
         };
         let currentLang = 'en';
@@ -326,6 +372,12 @@
                 const key = el.getAttribute('data-i18n-placeholder');
                 if (translations[lang][key]) el.placeholder = translations[lang][key];
             });
+            
+            // Toggle safety terms text visibility based on language
+            const termsEn = document.getElementById('termsTextEn');
+            const termsAm = document.getElementById('termsTextAm');
+            if (termsEn) termsEn.style.display = lang === 'en' ? 'block' : 'none';
+            if (termsAm) termsAm.style.display = lang === 'am' ? 'block' : 'none';
         }
 
         // --- State ---
@@ -588,6 +640,14 @@
 
         // --- Complete Check-In ---
         async function completeCheckIn() {
+            if (!document.getElementById('termsAgree').checked) {
+                const errMsg = currentLang === 'am' 
+                    ? translations.am.terms_required 
+                    : translations.en.terms_required;
+                alert(errMsg);
+                return;
+            }
+
             capturedSignature = document.getElementById('sigCanvas').toDataURL('image/png');
 
             const body = {
@@ -605,6 +665,7 @@
             capturedPhoto = null; capturedSignature = null;
             selectedEscortId = null; window._screeningResponses = [];
             visitData = null;
+            document.getElementById('termsAgree').checked = false;
             speak(currentLang === 'am' ? 'ግቢ ተጠናቅቋል' : 'Check-in complete. Thank you.');
         }
 
@@ -661,6 +722,67 @@
             }
             document.getElementById('btnCheckIn').disabled = false;
             document.getElementById('btnCheckOut').disabled = false;
+        }
+
+        // --- Camera QR Scanner Functions (FR-005) ---
+        let html5QrcodeScanner = null;
+
+        function toggleCameraScanner() {
+            const readerDiv = document.getElementById('qr-reader');
+            const btnText = document.getElementById('cameraScannerText');
+            
+            if (html5QrcodeScanner === null) {
+                readerDiv.style.display = 'block';
+                
+                html5QrcodeScanner = new Html5Qrcode("qr-reader");
+                html5QrcodeScanner.start(
+                    { facingMode: "environment" }, 
+                    {
+                        fps: 10,
+                        qrbox: (width, height) => {
+                            const size = Math.min(width, height) * 0.7;
+                            return { width: size, height: size };
+                        }
+                    },
+                    (decodedText, decodedResult) => {
+                        document.getElementById('qrInput').value = decodedText;
+                        stopCameraScanner();
+                        speak(currentLang === 'am' ? 'ኮድ ተገኝቷል' : 'QR code detected.');
+                        startCheckIn();
+                    },
+                    (errorMessage) => {
+                        // quiet parse errors
+                    }
+                ).then(() => {
+                    btnText.textContent = translations[currentLang]['stop_camera'];
+                    btnText.setAttribute('data-i18n', 'stop_camera');
+                }).catch(err => {
+                    console.error('Failed to start camera scanner', err);
+                    alert(currentLang === 'am' ? 'ካሜራውን መክፈት አልተቻለም። እባክዎ ፈቃድ መስጠትዎን ያረጋግጡ።' : 'Could not access camera. Please ensure permissions are granted.');
+                    stopCameraScanner();
+                });
+            } else {
+                stopCameraScanner();
+            }
+        }
+
+        function stopCameraScanner() {
+            const readerDiv = document.getElementById('qr-reader');
+            const btnText = document.getElementById('cameraScannerText');
+            if (html5QrcodeScanner) {
+                html5QrcodeScanner.stop().then(() => {
+                    html5QrcodeScanner = null;
+                    readerDiv.style.display = 'none';
+                    btnText.textContent = translations[currentLang]['scan_with_camera'];
+                    btnText.setAttribute('data-i18n', 'scan_with_camera');
+                }).catch(err => {
+                    console.error('Failed to stop camera scanner', err);
+                    html5QrcodeScanner = null;
+                    readerDiv.style.display = 'none';
+                    btnText.textContent = translations[currentLang]['scan_with_camera'];
+                    btnText.setAttribute('data-i18n', 'scan_with_camera');
+                });
+            }
         }
 
         // --- Navigation ---

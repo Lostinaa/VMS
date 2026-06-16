@@ -167,7 +167,7 @@ class GroupVisitRequest extends Component
         return view('livewire.group-visit-request', [
             'hosts' => User::where('role', 'host')->where('is_active', true)->pluck('name', 'id'),
             'sites' => Site::where('is_active', true)->pluck('name', 'id'),
-            'departments' => \App\Models\Department::where('is_active', true)->pluck('name', 'id'),
+            'departments' => \App\Models\Department::pluck('name', 'id'),
             'zones' => $zones,
         ])->layout('layouts.public');
     }

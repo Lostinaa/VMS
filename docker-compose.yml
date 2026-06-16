@@ -1,0 +1,65 @@
+services:
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: vms_app
+    restart: unless-stopped
+    env_file:
+      - .env
+    environment:
+      - DB_HOST=db
+      - VMS_SEED=true  # Seeds database on first startup
+    volumes:
+      - ./.env:/var/www/.env
+      - ./storage:/var/www/storage
+    depends_on:
+      - db
+
+  web:
+    image: nginx:alpine
+    container_name: vms_web
+    restart: unless-stopped
+    ports:
+      - "8000:80"
+    volumes:
+      - ./:/var/www
+      - ./docker/nginx/default.conf:/etc/nginx/conf.d/default.conf
+    depends_on:
+      - app
+
+  db:
+    image: postgres:15-alpine
+    container_name: vms_db
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: ${DB_DATABASE}
+      POSTGRES_USER: ${DB_USERNAME}
+      POSTGRES_PASSWORD: ${DB_PASSWORD}
+    ports:
+      - "5432:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+
+  queue-worker:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: vms_queue_worker
+    restart: unless-stopped
+    entrypoint: ["docker-entrypoint.sh"]
+    command: ["php", "artisan", "queue:work", "--tries=3"]
+    env_file:
+      - .env
+    environment:
+      - DB_HOST=db
+      - VMS_SEED=false
+    volumes:
+      - ./.env:/var/www/.env
+      - ./storage:/var/www/storage
+    depends_on:
+      - db
+      - app
+
+volumes:
+  pgdata:
